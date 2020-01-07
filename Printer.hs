@@ -1,4 +1,12 @@
-module Printer where
+module Main where
+
+-- system imports
+import System.Environment
+import System.Exit
+import Text.Printf
+import Text.Parsec
+import Text.Parsec.String
+import Text.PrettyPrint.ANSI.Leijen
 
 import ASTTranslator
 import PrettyPrint

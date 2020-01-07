@@ -1,0 +1,76 @@
+
+package: ansi-terminal-0.10.2
+os: linux
+arch: x86_64
+compiler: ghc-8.6.5
+client: cabal-install-2.4.1.0
+flags: -example
+dependencies: base-4.12.0.0 colour-2.3.5
+install-outcome: InstallOk
+docs-outcome: NotTried
+tests-outcome: NotTried
+
+package: ansi-wl-pprint-0.6.9
+os: linux
+arch: x86_64
+compiler: ghc-8.6.5
+client: cabal-install-2.4.1.0
+flags: -example
+dependencies: ansi-terminal-0.10.2 base-4.12.0.0
+install-outcome: InstallOk
+docs-outcome: NotTried
+tests-outcome: NotTried
+
+package: colour-2.3.5
+os: linux
+arch: x86_64
+compiler: ghc-8.6.5
+client: cabal-install-2.4.1.0
+dependencies: base-4.12.0.0
+install-outcome: InstallOk
+docs-outcome: NotTried
+tests-outcome: NotTried
+
+package: haskell-exp-parser-0.1.1
+os: linux
+arch: x86_64
+compiler: ghc-8.6.5
+client: cabal-install-2.4.1.0
+dependencies: base-4.12.0.0 template-haskell-2.14.0.0
+install-outcome: InstallOk
+docs-outcome: NotTried
+tests-outcome: NotTried
+
+package: isa-parser-0.1.0.0
+os: linux
+arch: x86_64
+compiler: ghc-8.6.5
+client: cabal-install-2.4.1.0
+dependencies: ansi-wl-pprint-0.6.9 base-4.12.0.0
+              haskell-exp-parser-0.1.1 mtl-2.2.2 parsec-3.1.13.0 syb-0.7.1
+              template-haskell-2.14.0.0
+install-outcome: BuildFailed
+docs-outcome: NotTried
+tests-outcome: NotTried
+
+package: syb-0.7.1
+os: linux
+arch: x86_64
+compiler: ghc-8.6.5
+client: cabal-install-2.4.1.0
+dependencies: base-4.12.0.0
+install-outcome: InstallOk
+docs-outcome: NotTried
+tests-outcome: NotTried
+
+package: isa-parser-0.1.0.0
+os: linux
+arch: x86_64
+compiler: ghc-8.6.5
+client: cabal-install-2.4.1.0
+dependencies: ansi-wl-pprint-0.6.9 base-4.12.0.0
+              haskell-exp-parser-0.1.1 mtl-2.2.2 parsec-3.1.13.0 syb-0.7.1
+              template-haskell-2.14.0.0
+install-outcome: InstallOk
+docs-outcome: NotTried
+tests-outcome: NotTried

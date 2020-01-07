@@ -9,9 +9,9 @@ module ASTTranslator where
 -- import Prelude hiding ((<$>))
 -- #endif
 
-import Isabelle.InnerAST 
+-- import Isabelle.InnerAST 
 import Isabelle.OuterAST
-import Isabelle.PrettyHelper 
+-- import Isabelle.PrettyHelper 
 
 import Isabelle.Parser
 

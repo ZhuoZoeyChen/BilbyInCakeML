@@ -1,0 +1,8 @@
+cabal: Entering directory '/tmp/cabal-tmp-17019/ansi-wl-pprint-0.6.9'
+Configuring ansi-wl-pprint-0.6.9...
+Preprocessing library for ansi-wl-pprint-0.6.9..
+Building library for ansi-wl-pprint-0.6.9..
+[1 of 2] Compiling Text.PrettyPrint.ANSI.Leijen.Internal ( Text/PrettyPrint/ANSI/Leijen/Internal.hs, dist/dist-sandbox-6ba06df6/build/Text/PrettyPrint/ANSI/Leijen/Internal.o )
+[2 of 2] Compiling Text.PrettyPrint.ANSI.Leijen ( Text/PrettyPrint/ANSI/Leijen.hs, dist/dist-sandbox-6ba06df6/build/Text/PrettyPrint/ANSI/Leijen.o )
+Installing library in /home/zoey/BilbyInCakeML/.cabal-sandbox/lib/x86_64-linux-ghc-8.6.5/ansi-wl-pprint-0.6.9-FB0s33jagFpHaQREf1SiCD
+cabal: Leaving directory '/tmp/cabal-tmp-17019/ansi-wl-pprint-0.6.9'
