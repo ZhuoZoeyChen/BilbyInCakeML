@@ -52,7 +52,9 @@ executable BilbyInCakeML
   main-is:             Printer.hs
 
   -- Modules included in this executable, other than Main.
-  -- other-modules:
+  other-modules:
+    ASTTranslator
+    PrettyPrint
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    DeriveDataTypeable, FlexibleContexts, CPP, GADTs, LambdaCase, QuasiQuotes
