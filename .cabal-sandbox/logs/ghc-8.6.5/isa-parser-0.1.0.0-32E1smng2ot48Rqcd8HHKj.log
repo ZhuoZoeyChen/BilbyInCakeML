@@ -1,9 +1,0 @@
-cabal: Entering directory '/home/zoey/cogent/isa-parser'
-Configuring isa-parser-0.1.0.0...
-Preprocessing library for isa-parser-0.1.0.0..
-Building library for isa-parser-0.1.0.0..
-[3 of 5] Compiling Isabelle.OuterAST ( Isabelle/OuterAST.hs, dist/dist-sandbox-6ba06df6/build/Isabelle/OuterAST.o )
-[4 of 5] Compiling Isabelle.Parser  ( Isabelle/Parser.hs, dist/dist-sandbox-6ba06df6/build/Isabelle/Parser.o )
-[5 of 5] Compiling Isabelle.ExprTH  ( Isabelle/ExprTH.hs, dist/dist-sandbox-6ba06df6/build/Isabelle/ExprTH.o )
-Installing library in /home/zoey/BilbyInCakeML/.cabal-sandbox/lib/x86_64-linux-ghc-8.6.5/isa-parser-0.1.0.0-32E1smng2ot48Rqcd8HHKj
-cabal: Leaving directory '/home/zoey/cogent/isa-parser'

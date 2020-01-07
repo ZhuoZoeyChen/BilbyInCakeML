@@ -1,7 +1,0 @@
-cabal: Entering directory '/tmp/cabal-tmp-17020/haskell-exp-parser-0.1.1'
-Configuring haskell-exp-parser-0.1.1...
-Preprocessing library for haskell-exp-parser-0.1.1..
-Building library for haskell-exp-parser-0.1.1..
-[1 of 1] Compiling Language.Haskell.ParseExp ( src/Language/Haskell/ParseExp.hs, dist/dist-sandbox-6ba06df6/build/Language/Haskell/ParseExp.o )
-Installing library in /home/zoey/BilbyInCakeML/.cabal-sandbox/lib/x86_64-linux-ghc-8.6.5/haskell-exp-parser-0.1.1-DRhUJ85jtzD8ECbzcpob7g
-cabal: Leaving directory '/tmp/cabal-tmp-17020/haskell-exp-parser-0.1.1'
