@@ -1,0 +1,17 @@
+1. Launch Isabelle 
+	L4V_ARCH=ARM ~/Isabelle2019/bin/isabelle jedit -d ~/cogent/impl/fs/bilby/proof/ -d ~/cogent/autocorres -l AutoCorres
+
+2. Launch Emacs
+	emacs
+
+3. Emacs HOL4 Shortcuts
+	Alt+h h 	<open/restart HOL repl>
+	Alt+h Ctrl+r	<send the code to HOL repl (quiet mode)>
+	Alt+h Alt+r	<send the code to HOL repl (loud mode)>
+	Alt+h Ctrl+c  	<interrupt>
+	Alt+h g 	<set goal>
+	Alt+h d		<drop goal>
+	Alt+h D		<drop all goals>
+	Alt+h e 	<send tactics over>
+
+4. 

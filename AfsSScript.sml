@@ -1,6 +1,6 @@
 (* Translate BilbyFS specifications into HOL4 *)
 
-(* TODO open ...
+(* TODO
 
 imports
    "../lib/FunBucket"
@@ -8,7 +8,14 @@ imports
    "../adt/WordArrayT"
    "../lib/CogentMonad"
    
+
+open FunBucketTheory
+open VfsTTheory
+open WordArrayTTheory
+open CogentMonadTheory
 *)
+
+open wordsTheory
 
 val _ = new_theory"AfsS"
 
@@ -16,36 +23,54 @@ val _ = new_theory"AfsS"
  val _ = option_monadsyntax.temp_add_option_monadsyntax();
 *)
 
-(*
 
-text {* High-level Correctness specification types *}
+Type U8 = ``:word8``;
+Type U32 = ``:word32``;
+Type U64 = ``:word64``;
+Type Ino = ``:U32``;
+Type Mode = ``:U32``;
+Type SizeT = ``:U64``;
+Type TimeT = ``:U64``;
 
-type_synonym byte = "U8"
-type_synonym page = "U8 list"
-type_synonym dir = "U8 list \<rightharpoonup> Ino"
-type_synonym file_data = "page list"
-*)
+(* text {* High-level Correctness specification types *}*)
 
-val _ = Datatype `afs_inode_type = IDir dir | IReg file_data | ILnk (*U8 list*)`
+Type byte = ``:U8``;
+Type byte = ``:U8``;
+Type page = ``:U8 list``;
+Type dir = ``:U8 list (*-> with option*) Ino``
+Type file_data = ``:page list``
 
-(*
-definition "afs_inode_is_dir x \<equiv> \<exists>v. IDir v = x"
-definition "afs_inode_is_reg x \<equiv> \<exists>v. IReg v = x"
-definition "afs_inode_is_lnk x \<equiv> \<exists>v. ILnk v = x"
-*)
+Datatype:
+        afs_inode_type = IDir dir |
+                         IReg file_data |
+                         ILnk (U8 list)
+End
 
-val _ = Datatype `
+Definition afs_inode_is_dir:
+    afs_inode_is_dir x = ?v. IDir v = x
+End
+
+Definition afs_inode_is_reg:
+    afs_inode_is_reg x = ?v. IReg v = x
+End
+
+Definition afs_inode_is_lnk:
+    afs_inode_is_lnk x = ?v. ILnk v = x
+End
+
+Datatype:
     afs_inode = <|  i_type : afs_inode_type;
-                    i_ino : (*Ino*);
-                    i_nlink : (*U32*);
-                    i_size : (*U64*);
-                    i_mtime : (*TimeT*);
-                    i_ctime : (*TimeT*);
-                    i_uid : (*U32*);
-                    i_gid : (*U32*);
-                    i_mode : (*Mode*);
-                    i_flags : (*U32*)
-                |>'
+                    i_ino : Ino;
+                    i_nlink : U32;
+                    i_size : U64;
+                    i_mtime : TimeT;
+                    i_ctime : TimeT;
+                    i_uid : U32;
+                    i_gid : U32;
+                    i_mode : Mode;
+                    i_flags : U32
+                |>
+End
 
 (*
 type_synonym readdir_ctx = "(U32 \<times> dir)" (* Remaining elements to read from the dir *)
