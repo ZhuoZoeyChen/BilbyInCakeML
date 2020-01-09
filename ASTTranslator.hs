@@ -1,3 +1,6 @@
+
+{-# LANGUAGE DeriveDataTypeable, FlexibleContexts #-}
+
 module ASTTranslator where
 
 -- InnerAST system imports
@@ -24,17 +27,17 @@ import Isabelle.OuterAST
 import Isabelle.PrettyHelper 
 import Isabelle.Parser
 
-nameH :: Name -> Name
-nameH name = name
+data TheoryH types terms = TheoryH { thyNameH :: String, thyImportsH :: TheoryImports} 
+                        deriving (Data, Typeable, Show)
+                        --, thyBodyH :: ?
 
-data TheoryH = TheoryH { thyNameH :: String } 
-                        deriving (Show)
-                        --Data, Typeable, 
+theoryH :: Theory types terms -> TheoryH types terms
+theoryH theory = TheoryH { thyNameH = thyName theory, thyImportsH = thyImports theory}
+--, thyBodyH = ? 
+-- translateDecl :: TheoryDecl types terms -> ?
 
-theoryH :: Theory types terms -> TheoryH
-theoryH theory = TheoryH { thyNameH = thyName theory}
-
-translate :: (L Theory) -> TheoryH
-translate (Theory n ip bd) = TheoryH { thyNameH = n }
+translate :: (L Theory) -> (L TheoryH)
+translate (Theory n ip bd) = TheoryH { thyNameH = n, thyImportsH = ip}
+--, thyBodyH = map translateDecl bd 
 
 

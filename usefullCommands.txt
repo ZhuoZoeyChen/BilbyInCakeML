@@ -14,7 +14,9 @@
 	Alt+h D		<drop all goals>
 	Alt+h e 	<send tactics over>
 
-4.cabal sandbox init
-  cabal update
-  cabal v1-install --only-dependencies 
-  cabal v1-build
+4.  cabal sandbox init
+	cabal update
+	cabal v1-install --only-dependencies 
+	cabal v1-build
+
+	~/BilbyInCakeML/dist/build/BilbyInCakeML/BilbyInCakeML ~/BilbyInCakeML/testFile.thy
