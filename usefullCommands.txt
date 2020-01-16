@@ -14,9 +14,54 @@
 	Alt+h D		<drop all goals>
 	Alt+h e 	<send tactics over>
 
-4.  cabal sandbox init
+4. Cabal
+    cabal sandbox init
 	cabal update
 	cabal v1-install --only-dependencies 
-	cabal v1-build
 
-	~/BilbyInCakeML/dist/build/BilbyInCakeML/BilbyInCakeML ~/BilbyInCakeML/testFile.thy
+	(* after modifying translator *)
+	cabal v1-build 
+	
+	(* after modifying isa-parser *)
+	cabal install 
+	
+	(* run main *)
+	cabal run ~/BilbyInCakeML/testFile.thy 
+
+	cabal sandbox hc-pkg -- unregister /home/zoey/cogent/isa-parser
+
+	cabal repl 
+
+5. Terminal Search
+    grep -r "caseN"
+    find -name "*Datatype*"
+
+6. Git
+    git diff HEAD~
+	git commit --amend -a
+
+	git checkout new-master
+	git rebase upstream/master new-master 
+	git push -f origin master
+
+(* merging via rebase <same branch> *)
+	git fetch upstream
+	git rebase upstream/master
+	git add PTF
+	git rebase --continue 
+
+(* merging via rebase <different branches> *)
+	git rebase master 
+		a. Conflict -> fix it -> then -> git add PATH/TO/FILE -> git rebase --continue
+		b. _ -> git rebase --skip 
+	git checkout master 
+	git rebase tmp
+
+
+
+7. GHCI
+	:m +ModuleName 
+
+
+
+

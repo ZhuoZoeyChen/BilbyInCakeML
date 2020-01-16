@@ -85,6 +85,10 @@ val _ = Datatype'
                 |>'
 
 
+Definition a_afs_updated[simp]:
+  
+End 
+
 definition
   a_afs_updated_n :: "nat \<Rightarrow> afs_map \<Rightarrow> (afs_map \<Rightarrow> afs_map) list \<Rightarrow> afs_map"
 where

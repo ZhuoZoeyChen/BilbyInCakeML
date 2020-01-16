@@ -9,6 +9,6 @@ import Isabelle.Parser
 import ASTTranslator 
 
 prettify :: (L TheoryH) -> String
-prettify theory = nm
+prettify theory = "TODO: open sometheories\n\n" ++ "val _ = new_theory \""++nm++"\"\n\n" ++ "val _ = export_theory ()"
     where 
         nm = thyNameH theory

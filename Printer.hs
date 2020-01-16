@@ -31,15 +31,19 @@ exitOnNothing errorString io = do
     Nothing -> putStrLn errorString >> exitWith (ExitFailure 1)
     Just x  -> return x
   
+-- moveComments ::
+-- moveComments file = undefined
 
 main :: IO ()
 main = do 
     file <- exitOnNothing "You must provide a file name as first argument" getFile
+     -- nfile <- moveComments file
     eRes <- parseFromFile topLevelL file
     case eRes of
         Left err  -> printf "Error parsing %s\n%s\n" file (show err)
         Right res -> do 
-            --ho4 <- return(translate res) 
-            --pho4 <- return(prettify ho4)
+            ho4 <- return(translate res) 
+            pho4 <- return(prettify ho4)
             print res
+            --writeFile "/home/zoey/BilbyInCakeML/testFile.sml" pho4
 

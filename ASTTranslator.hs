@@ -27,17 +27,16 @@ import Isabelle.OuterAST
 import Isabelle.PrettyHelper 
 import Isabelle.Parser
 
-data TheoryH types terms = TheoryH { thyNameH :: String, thyImportsH :: TheoryImports} 
+data TheoryH types terms = TheoryH { thyNameH :: String, thyImportsH :: TheoryImports}--, thyBodyH :: } 
                         deriving (Data, Typeable, Show)
-                        --, thyBodyH :: ?
-
+                        
 theoryH :: Theory types terms -> TheoryH types terms
-theoryH theory = TheoryH { thyNameH = thyName theory, thyImportsH = thyImports theory}
---, thyBodyH = ? 
--- translateDecl :: TheoryDecl types terms -> ?
+theoryH theory = TheoryH { thyNameH = thyName theory, thyImportsH = thyImports theory}--, thyBodyH = 
+
+--translateDecl :: TheoryDecl types terms -> ?
 
 translate :: (L Theory) -> (L TheoryH)
-translate (Theory n ip bd) = TheoryH { thyNameH = n, thyImportsH = ip}
---, thyBodyH = map translateDecl bd 
+translate (Theory n ip bd) = TheoryH { thyNameH = n, thyImportsH = ip}--, thyBodyH = map translateDecl bd }
 
+data TheoryDeclH types terms = Definition (Def types terms)
 

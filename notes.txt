@@ -1,0 +1,60 @@
+modification of AfsS
+
+1. move simp into a declare block 
+
+``definition
+  i_dir_update :: "(dir \<Rightarrow> dir) \<Rightarrow> afs_inode \<Rightarrow> afs_inode"
+ where
+  "i_dir_update m i \<equiv> i \<lparr>i_type:= IDir (m (i_dir i)) \<rparr>"
+
+declare i_dir_update_def[simp]``
+
+instead of 
+
+``definition
+  i_dir_update :: "(dir \<Rightarrow> dir) \<Rightarrow> afs_inode \<Rightarrow> afs_inode"
+ where
+  i_dir_update_def[simp]:
+  "i_dir_update m i \<equiv> i \<lparr>i_type:= IDir (m (i_dir i)) \<rparr>"
+``
+
+2. deleted comments and text blocks (should add back in later after fixed parser)
+
+
+3. 
+-- NEW VERSION A: 
+-- abbreviationL :: ParserM (L Abbrev)
+-- abbreviationL = do
+--   reserved "abbreviation"
+--   res <- alt1 <||> alt2
+--   return res
+
+--   where
+--     alt1 = do
+--       t <- quotedTermL
+--       return (Abbrev Nothing t) t
+--     alt2 = do
+--       mbSig <- mb sigL
+--       reserved "where"
+--       t     <- quotedTermL
+--       return $ Abbrev (Just mbSig) t
+
+-- NEW VERSION B:
+-- abbreviationL :: ParserM (L Abbrev)
+-- abbreviationL = do
+--   reserved "abbreviation"
+--   mbSig <- mb sigL
+--   reserved "where"
+--   t     <- quotedTermL
+--   return (Abbrev mbSig t)
+
+4.-- cmtTermL :: ParserM Term
+-- cmtTermL = cmtL termL
+
+-- cmtL :: ParserM a -> a 
+-- cmtL p = do { stringL "(*"; r <- p; stringL "*)"; return r }
+
+-- commentL :: ParserM String
+-- commentL = do
+--     content <- cmtTermL
+--     return $ content 

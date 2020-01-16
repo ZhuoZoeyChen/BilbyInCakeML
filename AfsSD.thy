@@ -46,7 +46,6 @@ record afs_state =
 definition
   a_afs_updated_n :: "nat \<Rightarrow> afs_map \<Rightarrow> (afs_map \<Rightarrow> afs_map) list \<Rightarrow> afs_map"
 where
- a_afs_updated_n_def[simp]:
  "a_afs_updated_n n afs_st updates = fold id (take n updates) afs_st"
 
 definition
@@ -70,9 +69,9 @@ where
 definition
   i_dir_update :: "(dir \<Rightarrow> dir) \<Rightarrow> afs_inode \<Rightarrow> afs_inode"
  where
-  i_dir_update_def[simp]:
-  "i_dir_update m i \<equiv> i \<lparr>i_type:= IDir (m (i_dir i)) \<rparr>"
-                                                  
+  "i_dir_update m i \<equiv> i \<lparr> i_type := IDir (m (i_dir i)) \<rparr>"
+
+
 abbreviation i_type_data :: "afs_inode_type \<Rightarrow> file_data"
 where
   "i_type_data it \<equiv> (case it of IReg data \<Rightarrow> data)"
