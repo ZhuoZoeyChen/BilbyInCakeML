@@ -44,9 +44,11 @@
 	git rebase upstream/master new-master 
 	git push -f origin master
 
+	git remote set-url <remote-name> <remote-url>
+
 (* merging via rebase <same branch> *)
 	git fetch upstream
-	git rebase upstream/master
+	git rebase -i upstream/master
 	git add PTF
 	git rebase --continue 
 
@@ -57,6 +59,11 @@
 	git checkout master 
 	git rebase tmp
 
+(* every time need to commit *)
+	git fetch upstream
+	git add PTF
+	git commit -m"commit message"
+	git push
 
 
 7. GHCI

@@ -1,4 +1,5 @@
-theory AfsSD
+
+theory AfsS
 imports
    "../lib/FunBucket"
    "../adt/VfsT"
@@ -8,15 +9,13 @@ begin
 
 type_synonym byte = "U8"
 type_synonym page = "U8 list"
-type_synonym dir = "U8 list \<Rightarrow> Ino option"
+type_synonym dir = "U8 list \<rightharpoonup> Ino"
 type_synonym file_data = "page list"
-
 
 datatype afs_inode_type =
   IDir "dir"
 | IReg "file_data"
 | ILnk  "U8 list"
-
 
 definition "afs_inode_is_dir x \<equiv> \<exists>v. IDir v = x"
 definition "afs_inode_is_reg x \<equiv> \<exists>v. IReg v = x"
@@ -34,18 +33,20 @@ record afs_inode =
   i_mode :: "Mode"
   i_flags :: "U32"
 
-type_synonym readdir_ctx = "(U32 \<times> dir)" 
+type_synonym readdir_ctx = "(U32 \<times> dir)"
 
-type_synonym afs_map =  "Ino \<Rightarrow> afs_inode option"
+type_synonym afs_map =  "Ino \<rightharpoonup> afs_inode"
+
 record afs_state =
   a_is_readonly :: "bool"
   a_current_time :: "TimeT"
-  a_medium_afs :: "afs_map" 
-  a_medium_updates :: "(afs_map \<Rightarrow> afs_map) list" 
+  a_medium_afs :: "afs_map"
+  a_medium_updates :: "(afs_map \<Rightarrow> afs_map) list"
 
 definition
   a_afs_updated_n :: "nat \<Rightarrow> afs_map \<Rightarrow> (afs_map \<Rightarrow> afs_map) list \<Rightarrow> afs_map"
 where
+ a_afs_updated_n_def[simp]:
  "a_afs_updated_n n afs_st updates = fold id (take n updates) afs_st"
 
 definition
@@ -69,12 +70,17 @@ where
 definition
   i_dir_update :: "(dir \<Rightarrow> dir) \<Rightarrow> afs_inode \<Rightarrow> afs_inode"
  where
+  i_dir_update_def[simp]:
   "i_dir_update m i \<equiv> i \<lparr>i_type:= IDir (m (i_dir i)) \<rparr>"
-
+                                                  
 abbreviation i_type_data :: "afs_inode_type \<Rightarrow> file_data"
 where
   "i_type_data it \<equiv> (case it of IReg data \<Rightarrow> data)"
-
+(*
+abbreviation dirent_i_type :: "afs_inode_type \<Rightarrow> dirent_type"
+where
+ "dirent_i_type it \<equiv> (case it of IDir _ \<Rightarrow> DT_DIR | IReg _ \<Rightarrow> DT_REG | ILnk _ \<Rightarrow> DT_LNK)"
+ *)
 abbreviation i_data :: "afs_inode \<Rightarrow> file_data"
 where
   "i_data i \<equiv> i_type_data (i_type i)"
@@ -97,6 +103,7 @@ abbreviation i_path_update :: "(byte list \<Rightarrow> byte list) \<Rightarrow>
 
 primrec i_size_from_afs_inode_type :: "afs_inode_type \<Rightarrow> U64"
 where
+(* Can we prove anything about the size of a directory? *)
   "i_size_from_afs_inode_type (IDir dir) = undefined"
  |"i_size_from_afs_inode_type (IReg data) = count (concat data)"
  |"i_size_from_afs_inode_type (ILnk path) = count path"
@@ -145,7 +152,21 @@ where
   "nondet_error errs f \<equiv> CogentMonad.select errs >>= (return o f)"
 
 
+definition
+  afs_alloc_inum :: "afs_map \<Rightarrow> ((unit, Ino) R) cogent_monad"
+where
+ "afs_alloc_inum as \<equiv>
+    (do
+     avail_inums \<leftarrow> return $ - dom as ;
+     opt_inum \<leftarrow> select $ {option.None} \<union> option.Some ` avail_inums ;
+     return $ if opt_inum = option.None then
+        Error ()
+      else        
+        Success (the opt_inum)
+     od)"
 
+
+(* os_get_current_time *)
 definition
  afs_get_current_time :: "afs_state \<Rightarrow> (afs_state \<times> TimeT) cogent_monad"
 where
@@ -259,6 +280,11 @@ where
     od
   od" 
 
+(* Assumptions:  "v_ino parentdir \<in> dom (a_medium_afs (a_afs_updated afs))" 
+                In other words, the v_inode for the parent dir must be represented in the afs data structure.
+  nlinks of vnode < MaxWord -1
+ *)
+
 definition
   afs_unlink :: "afs_state \<Rightarrow> vnode \<Rightarrow> U8 WordArray \<Rightarrow> vnode \<Rightarrow>
                    ((afs_state \<times> vnode \<times> vnode) \<times> (unit, ErrCode) R\<^sub>T) cogent_monad"
@@ -270,6 +296,7 @@ where
        Error (e, afs) \<Rightarrow> return ((afs, parentdir, vnode), Error e)
      | Success afs \<Rightarrow> do
      (afs, time) \<leftarrow> afs_get_current_time afs;
+     (* We need to use updated afs because inode might contain data blocks *)
      inode  \<leftarrow> return ((the $ updated_afs afs (v_ino vnode))\<lparr>i_nlink:= v_nlink vnode - 1, i_ctime:= time\<rparr>) ;
      newsize \<leftarrow> select {sz. sz < v_size parentdir};
      dir_ino \<leftarrow> return (v_ino parentdir);
@@ -294,6 +321,7 @@ where
       r \<leftarrow> read_afs_inode afs inum;
       case r of
        Success inode \<Rightarrow>
+        (* update vnode with inode *)
         return (afs_inode_to_vnode inode, Success ())
       | Error e \<Rightarrow>
        return (vnode, Error e)
@@ -340,6 +368,7 @@ where
     | Success newsz \<Rightarrow> do
    time \<leftarrow> return (v_ctime vnode);
    dir \<leftarrow> return (dir\<lparr>i_ctime:=time, i_mtime:=time, i_size := newsz\<rparr>);
+   (* We need to use updated_afs because vnode might contain data blocks *)
    inode  \<leftarrow> return (the $ updated_afs afs (v_ino vnode));
    (afs, r) \<leftarrow> afs_update afs (\<lambda>f. f(i_ino inode \<mapsto> inode, i_ino dir \<mapsto> dir));
    case r of
@@ -407,6 +436,7 @@ where
      do
      (afs, time) \<leftarrow> afs_get_current_time afs;
      vnode' \<leftarrow> return (vnode \<lparr> v_nlink := 0 \<rparr>);
+     (* no need to use updated afs since vnode must be an empty dir *)
      inode  \<leftarrow> return (afs_inode_from_vnode vnode);
      newsize \<leftarrow> select {sz. sz < v_size parentdir};
      dir_ino \<leftarrow> return (v_ino parentdir);
@@ -466,6 +496,8 @@ definition
   pad_block :: "U8 list \<Rightarrow> U32 \<Rightarrow> U8 list"
 where
  "pad_block data len \<equiv> data @ drop (length data) (replicate (unat len) 0)"
+
+(* No support for holes for now *)
 
 definition
   afs_readpage :: "afs_state \<Rightarrow> vnode \<Rightarrow> U64 \<Rightarrow> U8 WordArray \<Rightarrow>

@@ -58,3 +58,31 @@ instead of
 -- commentL = do
 --     content <- cmtTermL
 --     return $ content 
+
+
+5 comment 
+
+
+listTermL :: ParserM Term 
+listTermL = do 
+  stringL "["
+  eles <- sepBy1 (try termL) (stringL ",")
+  stringL "]"
+
+  quasiletterSi :: ParserM String
+quasiletterSi = ((letterS <||> digitS <||> charString '_' <||> charString '.') <||> charString '\'' ) <?> "quasi-letter"
+
+
+6. option map 
+
+  OpMap     -> BinOpRec AssocRight  "\\<rightharpoonup>"
+
+
+7. declare 
+
+definition
+  i_dir_update :: "(dir \<Rightarrow> dir) \<Rightarrow> afs_inode \<Rightarrow> afs_inode"
+ where
+  "i_dir_update m i \<equiv> i \<lparr>i_type:= IDir (m (i_dir i)) \<rparr>"
+
+declare i_dir_update_def[simp]
