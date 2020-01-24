@@ -86,3 +86,44 @@ definition
   "i_dir_update m i \<equiv> i \<lparr>i_type:= IDir (m (i_dir i)) \<rparr>"
 
 declare i_dir_update_def[simp]
+
+8.
+
+
+
+subsTermL :: ParserM Term 
+subsTermL = do 
+  name <- try nameL 
+  stringL "\\<^sub>"
+  subscript <- try nameL 
+  return $ TermApp (TermApp (ConstTerm $ StringLiteral "subscript") (ConstTerm $ StringLiteral name)) (ConstTerm $ StringLiteral subscript) 
+
+funUpdTermL :: ParserM Term 
+funUpdTermL = do 
+  f <- nameL 
+  res <- alt1 <||> alt2 <||> alt3
+  return res
+  where 
+    alt1 = do
+      stringL "("
+      x <- termL
+      stringL ":="
+      v <- termL
+      stringL ")"
+      return $ TermApp (ConstTerm (StringLiteral) "fun_upd") (TupleTerm (f, List [(x,v)]))
+    alt2 = do 
+      stringL "("
+      eles <- sepBy1 mapsToTermL (stringL ",") 
+      stringL ")"
+      return $ TermApp (ConstTerm (StringLiteral) "fun_upd") (TupleTerm (f, eles)) 
+    alt3 = do 
+      stringL "["
+      
+
+
+mapsToTermL :: ParserM 
+mapsToTermL = do 
+  term1 <- termL 
+  stringL "\\mapsto"
+  term2 <- termL 
+  return $ TupleTerm (term1, option.Some term2)
