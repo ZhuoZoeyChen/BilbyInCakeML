@@ -89,8 +89,6 @@ declare i_dir_update_def[simp]
 
 8.
 
-
-
 subsTermL :: ParserM Term 
 subsTermL = do 
   name <- try nameL 
@@ -134,8 +132,12 @@ mapsToTermL = do
 
   list, tuple, pair 
 
-  10. TermIdent or ConstTerm ? 
+  10. TermIdent!
 
   11. Isabelle/Pure; Isabelle/HOL ?
 
   12. might want to check associativity for termbinOp 
+
+  13. Text.Parsec.token 
+
+  parentsL, bracketL ...
