@@ -127,3 +127,15 @@ mapsToTermL = do
   stringL "\\mapsto"
   term2 <- termL 
   return $ TupleTerm (term1, option.Some term2)
+
+  9.
+
+  ListTerm 
+
+  list, tuple, pair 
+
+  10. TermIdent or ConstTerm ? 
+
+  11. Isabelle/Pure; Isabelle/HOL ?
+
+  12. might want to check associativity for termbinOp 
