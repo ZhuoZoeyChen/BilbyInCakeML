@@ -21,34 +21,12 @@ instead of
 2. deleted comments and text blocks (should add back in later after fixed parser)
 
 
-3. 
--- NEW VERSION A: 
--- abbreviationL :: ParserM (L Abbrev)
--- abbreviationL = do
---   reserved "abbreviation"
---   res <- alt1 <||> alt2
---   return res
+----------------------------
+TODOs:
 
---   where
---     alt1 = do
---       t <- quotedTermL
---       return (Abbrev Nothing t) t
---     alt2 = do
---       mbSig <- mb sigL
---       reserved "where"
---       t     <- quotedTermL
---       return $ Abbrev (Just mbSig) t
+1.Comment 
 
--- NEW VERSION B:
--- abbreviationL :: ParserM (L Abbrev)
--- abbreviationL = do
---   reserved "abbreviation"
---   mbSig <- mb sigL
---   reserved "where"
---   t     <- quotedTermL
---   return (Abbrev mbSig t)
-
-4.-- cmtTermL :: ParserM Term
+-- cmtTermL :: ParserM Term
 -- cmtTermL = cmtL termL
 
 -- cmtL :: ParserM a -> a 
@@ -60,84 +38,25 @@ instead of
 --     return $ content 
 
 
-5 comment 
-
-
-listTermL :: ParserM Term 
-listTermL = do 
-  stringL "["
-  eles <- sepBy1 (try termL) (stringL ",")
-  stringL "]"
-
-  quasiletterSi :: ParserM String
-quasiletterSi = ((letterS <||> digitS <||> charString '_' <||> charString '.') <||> charString '\'' ) <?> "quasi-letter"
-
-
-6. option map 
+2. option map 
 
   OpMap     -> BinOpRec AssocRight  "\\<rightharpoonup>"
 
-
-7. declare 
-
-definition
-  i_dir_update :: "(dir \<Rightarrow> dir) \<Rightarrow> afs_inode \<Rightarrow> afs_inode"
- where
-  "i_dir_update m i \<equiv> i \<lparr>i_type:= IDir (m (i_dir i)) \<rparr>"
-
-declare i_dir_update_def[simp]
-
-8.
-
+3.
 subsTermL :: ParserM Term 
-subsTermL = do 
-  name <- try nameL 
+subsTermL = try $ do 
+  name <- nameL 
   stringL "\\<^sub>"
-  subscript <- try nameL 
-  return $ TermApp (TermApp (ConstTerm $ StringLiteral "subscript") (ConstTerm $ StringLiteral name)) (ConstTerm $ StringLiteral subscript) 
-
-funUpdTermL :: ParserM Term 
-funUpdTermL = do 
-  f <- nameL 
-  res <- alt1 <||> alt2 <||> alt3
-  return res
-  where 
-    alt1 = do
-      stringL "("
-      x <- termL
-      stringL ":="
-      v <- termL
-      stringL ")"
-      return $ TermApp (ConstTerm (StringLiteral) "fun_upd") (TupleTerm (f, List [(x,v)]))
-    alt2 = do 
-      stringL "("
-      eles <- sepBy1 mapsToTermL (stringL ",") 
-      stringL ")"
-      return $ TermApp (ConstTerm (StringLiteral) "fun_upd") (TupleTerm (f, eles)) 
-    alt3 = do 
-      stringL "["
-      
+  subscript <- nameL 
+  return $ TermApp (TermApp (TermIdent $ Id "subscript") (TermIdent $ Id name)) (TermIdent $ Id subscript) 
 
 
-mapsToTermL :: ParserM 
-mapsToTermL = do 
-  term1 <- termL 
-  stringL "\\mapsto"
-  term2 <- termL 
-  return $ TupleTerm (term1, option.Some term2)
+  4. Isabelle/Pure; Isabelle/HOL ?
 
-  9.
+  5. might want to check associativity for termbinOp 
 
-  ListTerm 
+  6. Linux Kernel FS
+    fs/read_write.c 
 
-  list, tuple, pair 
+7.
 
-  10. TermIdent!
-
-  11. Isabelle/Pure; Isabelle/HOL ?
-
-  12. might want to check associativity for termbinOp 
-
-  13. Text.Parsec.token 
-
-  parentsL, bracketL ...

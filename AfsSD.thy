@@ -48,6 +48,8 @@ definition
 where
  "a_afs_updated_n n afs_st updates = fold id (take n updates) afs_st"
 
+declare a_afs_updated_n[simp]
+
 definition
   a_afs_updated :: "afs_map \<Rightarrow> (afs_map \<Rightarrow> afs_map) list \<Rightarrow> afs_map"
 where
@@ -70,6 +72,8 @@ definition
   i_dir_update :: "(dir \<Rightarrow> dir) \<Rightarrow> afs_inode \<Rightarrow> afs_inode"
  where
   "i_dir_update m i \<equiv> i \<lparr>i_type:= IDir (m (i_dir i)) \<rparr>"
+
+declare i_dir_update[simp]
 
 abbreviation i_type_data :: "afs_inode_type \<Rightarrow> file_data"
 where
