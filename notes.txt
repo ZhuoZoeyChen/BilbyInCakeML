@@ -57,6 +57,3 @@ subsTermL = try $ do
 
   6. Linux Kernel FS
     fs/read_write.c 
-
-7.
-
