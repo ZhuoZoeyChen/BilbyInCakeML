@@ -8,6 +8,7 @@ import Text.Parsec
 import Text.Parsec.String
 import Text.PrettyPrint.ANSI.Leijen
 import Data.Data
+import System.IO
 
 import Isabelle.InnerAST 
 import Isabelle.OuterAST
@@ -44,6 +45,9 @@ main = do
         Right res -> do 
             ho4 <- return(translate res) 
             pho4 <- return(prettify ho4)
-            print res
-            --writeFile "/home/zoey/BilbyInCakeML/testFile.sml" pho4
+            -- writeFile "/home/zoey/BilbyInCakeML/AfsSD" (show res)
+
+            handle <- openFile "AfsSDParsed.thy" WriteMode
+            hPutDoc handle (pretty res)
+            hClose handle
 
