@@ -38,6 +38,7 @@
 
 6. Git
     git diff HEAD~
+	git diff --cached
 	git commit --amend -a
 
 	git checkout new-master

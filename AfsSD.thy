@@ -148,7 +148,18 @@ definition
 where
   "nondet_error errs f \<equiv> CogentMonad.select errs >>= (return o f)"
 
-
+definition
+  afs_alloc_inum :: "afs_map \<Rightarrow> ((unit, Ino) R) cogent_monad"
+where
+ "afs_alloc_inum as \<equiv>
+    (do
+     avail_inums \<leftarrow> return $ - dom as ;
+     opt_inum \<leftarrow> select $ {option.None} \<union> option.Some ` avail_inums ;
+     return $ if opt_inum = option.None then
+        Error ()
+      else        
+        Success (the opt_inum)
+     od)"
 
 definition
  afs_get_current_time :: "afs_state \<Rightarrow> (afs_state \<times> TimeT) cogent_monad"
