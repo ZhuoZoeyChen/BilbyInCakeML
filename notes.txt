@@ -37,6 +37,14 @@ TODOs:
 --     content <- cmtTermL
 --     return $ content 
 
+commentL :: ParserM (L Dcl)
+commentL = do 
+  reserved "\\<comment>"
+  reserved "\\<open>"
+  cmt <- 
+  reserved "\\<close>"
+  return $ Dcl name rules 
+
 
 2. option map 
 
@@ -57,3 +65,21 @@ subsTermL = try $ do
 
   6. Linux Kernel FS
     fs/read_write.c 
+
+
+7. one minute talk 
+
+In the development of trustworthy systems, we need to prove the end to end correctness of operating system services such as
+file systems, which is our choice of case study. 
+
+The green part here is called virtual file systems (VFS), which is an interface between users and file systems.
+Currently we have two pieces of proofs, here and here. One in CakeML language showing the correctness of user's system calls down to VFS,
+and one in Cogent language showing the correctness of a specific file system called BilbyFS up until VFS.
+
+To combine these two proofs and close the proving gaps, we need to fill out and prove VFS. 
+
+Our research idea is to transplant the specification of BilbyFs into CakeML, then write a specification for VFS using that, 
+and finally prove from VFS spec to CakeML spec.
+After these, we will have the complete end to end proof of the whole file system service using BilbyFS and therefore increase the overall trustworthiness of 
+computer systems. 
+
