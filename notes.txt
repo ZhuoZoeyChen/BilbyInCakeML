@@ -45,6 +45,9 @@ commentL = do
   reserved "\\<close>"
   return $ Dcl name rules 
 
+"\\<comment>", 
+  "\\<open>", "\\<close>"
+  
 
 2. option map 
 
