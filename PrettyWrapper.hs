@@ -48,15 +48,13 @@ instance Pretty HOLIdent where
 
 instance Pretty HOLConst where 
     pretty (HOLConst c) = case c of 
-        TrueC  -> string "True"
-        FalseC -> string "False"
-        IntLiteral    i -> integer i
-        CharLiteral   c -> string $ printf "CHR %#02x" $ ord c
-        StringLiteral s | '\'' `elem` s -> string $ "[" ++ intercalate "," (map repr s) ++ "]"
-                | otherwise     -> string $ "''" ++ s ++ "''"
-                    where repr = printf "CHR %#02x" . ord
-        Top    -> string "\\<top>"
-        Bottom -> string "\\<bottom>"
+        TrueC  -> string "T"
+        FalseC -> string "F"
+        IntLiteral    i -> pretty i
+        CharLiteral   c -> pretty c
+        StringLiteral s -> pretty s
+        Top    -> string "\\<top>" --FIXME: zoeyc
+        Bottom -> string "\\<bottom>" --FIXME: zoeyc
 
 instance Pretty HOLArity where 
     pretty (HOLArity (Arity Nothing n)) = string n
@@ -84,8 +82,8 @@ prettyHOLTerm p (HOLTerm tm) = case tm of
   ConstTerm const       -> pretty const
   AntiTerm str          -> empty
   CaseOf e alts         -> parens (string "case" <+> pretty e <+> string "of" <$> sep (map ((text "|" <+> ). (prettyAssis "=>")) alts))
-  RecordUpd upds        -> string "(|" <+> sep (punctuate (text ";") (map (prettyAssis "|->") upds)) <+> string "|)"
-  RecordDcl dcls        -> string "(|" <+> sep (punctuate (text ",") (map (prettyAssis "=") dcls)) <+> string "|)"
+  RecordUpd upds        -> string "<|" <+> sep (punctuate (text ";") (map (prettyAssis ":=") upds)) <+> string "|>"
+  RecordDcl dcls        -> string "<|" <+> sep (punctuate (text ";") (map (prettyAssis ":=") dcls)) <+> string "|>"
   IfThenElse cond c1 c2 -> parens (string "if" <+> prettyHOLTerm p cond <+> string "then" <+> prettyHOLTerm p c1 <+> string "else" <+> prettyHOLTerm p c2)
   DoBlock dos           -> string "do" <$> sep (punctuate (text ";") (map pretty dos)) <$> string "od"
   DoItem  a b           -> pretty a <+> string "\\<leftarrow>" <+> pretty b 
