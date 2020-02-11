@@ -16,13 +16,29 @@ import Isabelle.InnerAST
 import Isabelle.OuterAST
 import Isabelle.PrettyHelper
 
--- Inner 
+------------------------------------------------------------------------
+
+---------------         Inner                ---------------------------
+
+------------------------------------------------------------------------
+
 newtype HOLIdent = HOLIdent Ident 
 newtype HOLTerm  = HOLTerm Term 
 newtype HOLPrimType = HOLPrimType PrimType
 newtype HOLType  = HOLType Type 
 newtype HOLConst = HOLConst Const 
 newtype HOLArity = HOLArity Arity 
+
+quantifierAuxHOL :: Quantifier -> QuantifierRec
+quantifierAuxHOL q = case q of
+  MetaBind    -> QuantifierRec 0  "/\\"
+  Lambda      -> QuantifierRec 3  "\\"
+  Forall      -> QuantifierRec 10 "!"
+  Exists      -> QuantifierRec 10 "?"
+  ExistsBang  -> QuantifierRec 10 "?!"
+
+quantifierPrecHOL = quantifierRecPrecedence . quantifierAuxHOL
+quantifierSymHOL =  quantifierRecSymbol . quantifierAuxHOL
 
 instance Pretty HOLIdent where 
     pretty (HOLIdent ident) = case ident of 
@@ -52,38 +68,102 @@ instance Pretty HOLTerm where
 termAppPrecHOL = 100
 
 prettyHOLTerm :: Precedence -> HOLTerm -> Doc
-prettyHOLTerm p (HOLTerm t) = case t of
+prettyHOLTerm p (HOLTerm tm) = case tm of
   TermIdent i           -> pretty $ HOLIdent i
   -- highest precedence and left associative
-  TermApp t t'          -> prettyParen (p > termAppPrecHOL) $ prettyHOLTerm termAppPrecHOL t <+>
-                             prettyHOLTerm (termAppPrecHOL+1) t'
-  TermWithType t typ    -> prettyParen True $ pretty t <+> string "::" <+> pretty typ
-  QuantifiedTerm q is t -> prettyQuantifier p q is t
-  TermBinOp b t t'      -> (case b of
-                              MetaImp -> prettyMetaImp p t t'
-                              _       -> prettyBinOpTerm p b t t')
-  TermUnOp u t          -> prettyUnOpTerm p u t
-  ListTerm l ts r       -> pretty l <> hcat (intersperse (string ", ") (map (prettyHOLTerm termAppPrecHOL) ts)) <> pretty r
+  TermApp t t'          -> prettyParen (p > termAppPrecHOL) $ prettyHOLTerm termAppPrecHOL (HOLTerm t) <+>
+                             prettyHOLTerm (termAppPrecHOL+1) (HOLTerm t')
+  TermWithType t typ    -> prettyParen True $ pretty (HOLTerm t) <+> string "::" <+> pretty (HOLType typ)
+  QuantifiedTerm q is t -> prettyQuantifierHOL p q is t
+  TermBinOp b t t'      -> prettyBinOpTermHOL p b (HOLTerm t) (HOLTerm t')
+  -- TermBinOp b t t'      -> (case b of
+  --                             MetaImp -> prettyMetaImpHOL p t t'
+  --                             _       -> prettyBinOpTermHOL p b t t')
+  TermUnOp u t          -> prettyUnOpTerm p u (HOLTerm t)
+  ListTerm l ts r       -> pretty l <> hcat (intersperse (string ", ") (map ((prettyHOLTerm termAppPrecHOL). HOLTerm) ts)) <> pretty r
   ConstTerm const       -> pretty const
-  AntiTerm str          -> pretty str  -- FIXME: zilinc
-  CaseOf e alts         -> parens (string "case" <+> pretty e <+> string "of" <$> sep (punctuate (text "|") (map (prettyAssis "\\<Rightarrow>") alts)))
-  RecordUpd upds        -> string "\\<lparr>" <+> sep (punctuate (text ",") (map (prettyAssis ":=") upds)) <+> string "\\<rparr>"
-  RecordDcl dcls        -> string "\\<lparr>" <+> sep (punctuate (text ",") (map (prettyAssis "=") dcls)) <+> string "\\<rparr>"
+  AntiTerm str          -> empty
+  CaseOf e alts         -> parens (string "case" <+> pretty e <+> string "of" <$> sep (map ((text "|" <+> ). (prettyAssis "=>")) alts))
+  RecordUpd upds        -> string "(|" <+> sep (punctuate (text ";") (map (prettyAssis "|->") upds)) <+> string "|)"
+  RecordDcl dcls        -> string "(|" <+> sep (punctuate (text ",") (map (prettyAssis "=") dcls)) <+> string "|)"
   IfThenElse cond c1 c2 -> parens (string "if" <+> prettyHOLTerm p cond <+> string "then" <+> prettyHOLTerm p c1 <+> string "else" <+> prettyHOLTerm p c2)
   DoBlock dos           -> string "do" <$> sep (punctuate (text ";") (map pretty dos)) <$> string "od"
   DoItem  a b           -> pretty a <+> string "\\<leftarrow>" <+> pretty b 
   Set st                -> string "{" <> (case st of 
                               Quant q c -> pretty q <> string "." <+> pretty c
                               Range a b -> pretty a <> string ".." <> pretty b 
-                              Listing lst -> sep (punctuate (text ",") (map pretty lst))) <> string "}"
-  LetIn lt i            -> string "let" <+> sep (punctuate (text ";") (map (prettyAssis "=") lt)) <+> string "in" <+> pretty i
+                              Listing lst -> sep (punctuate (text ";") (map pretty lst))) <> string "}"
+                          -- FIXME: zoeyc
+  LetIn lt i            -> string "let" <+> sep (punctuate (text ";" <$>) (map (prettyAssis "=") lt)) <$> string "in" <$> pretty i
+                          -- FIXME: make indentation better / zoeyc
+prettyBinOpTermHOL :: Precedence -> TermBinOp -> HOLTerm -> HOLTerm -> Doc
+prettyBinOpTermHOL p b = prettyBinOp p prettyHOLTerm (termBinOpRec b) prettyHOLTerm
+
+prettyUnOpTermHOL :: Precedence -> TermUnOp -> HOLTerm -> Doc
+prettyUnOpTermHOL p u = prettyUnOp p (termUnOpRec u) prettyHOLTerm
+
+--
+-- [| P_1; ...; P_n |] ==> Q is syntactic sugar for P_1 ==> ... ==> P_n ==> Q
+--
+-- @prettyMetaImp@ takes care of printing it that way.
+-- prettyMetaImpHOL :: Precedence -> Term -> Term -> Doc
+-- prettyMetaImpHOL p t t' = case t' of
+--   t'@(TermBinOp MetaImp _ _) -> go [t] t'
+--   _                   -> prettyBinOpTerm p MetaImp t t'
+--   where
+--     p' = termBinOpPrec MetaImp
+--     go ts (TermBinOp MetaImp t t') = go (t:ts) t'
+--     go ts t                    =
+--       string "\\<lbrakk>" <>
+--       (hsep . punctuate semi . map (prettyTerm (p'+1)) . reverse $ ts) <>
+--       string "\\<rbrakk>" <+> string (termBinOpSym MetaImp) <+> prettyTerm p' t
+
+prettyQuantifierHOL :: Precedence -> Quantifier -> [Term] -> Term -> Doc
+prettyQuantifierHOL p q is t = prettyParen (p > quantifierPrec q) $ string (quantifierSym q) <>
+                              (hsep . map (prettyHOLTerm 0. HOLTerm) $ is) <> char '.' <+> pretty (HOLTerm t)
+
+instance Pretty HOLPrimType where
+  pretty ty = string $ case ty of
+    IntT  -> "int"
+    BoolT -> "bool"
+    NatT  -> "nat"
 
 instance Pretty HOLType where
   pretty = prettyHOLType 0
 
+tyArrowSymHOL = "\\<Rightarrow>" -- FIXME: zoeyc
+tyTupleSymHOL = "\\<times>" -- FIXME: zoeyc
+
+prettyTypeVarsHOL :: [HOLType] -> Doc
+prettyTypeVarsHOL [] = empty
+prettyTypeVarsHOL [ty] = prettyHOLType 100 ty -- application has highest precedence
+prettyTypeVarsHOL tys = char '(' <> (hsep . punctuate (char ',') . map (prettyHOLType 0) $ tys) <> char ')'  -- FIXME: not very pretty / zilinc
+
+prettyHOLType :: Precedence -> HOLType -> Doc
+prettyHOLType p (HOLType ty) =
+    case ty of
+      TyVar v          -> char '\'' <> string v
+      TyDatatype s tys -> prettyTypeVarsHOL (HOLType tys) <+> string s
+      TyPrim t         -> pretty (HOLPrimType t)
+      -- TyArrow is right associative
+      TyArrow t t'     -> prettyParen (p > pa) $ prettyHOLType (pa+1) (HOLType t) <+>
+                          string tyArrowSymHOL <+> prettyType pa (HOLType t')
+      -- TyTuple is right associative
+      TyTuple t t'     -> prettyParen (p > pt) $ prettyHOLType (pt+1) (HOLType t) <+>
+                          string tyTupleSymHOL <+> prettyHOLType pt (HOLTtpe t')
+      AntiType t       -> string t  -- FIXME: zilinc
+  where
+     pa = 1
+     pt = 2
 
 
--- Outer 
+------------------------------------------------------------------------
+
+---------------         Outer                ---------------------------
+
+------------------------------------------------------------------------
+
+
 newtype HOLTheory types terms = HOLTheory (Theory types terms)
 newtype HOLTheoryDecl types terms = HOLTheoryDecl (TheoryDecl types terms)
 newtype HOLContext types terms = HOLContext (Context types terms)
@@ -117,9 +197,9 @@ newtype HOLAbbrev types terms = HOLAbbrev (Abbrev types terms)
 newtype HOLTheoryImports = HOLTheoryImports TheoryImports
 
 instance (Pretty terms, Pretty types) =>  Pretty (HOLTheory terms types) where
-  pretty (HOLTheory (Theory terms types)) = (pretty (thyImports thy) <$$>
+  pretty (HOLTheory thy) = (pretty (thyImports thy) <$$>
                                              string "val _ = new_theory\"" <> string (thyName thy) <> string ) <$$>
-                                             prettyThyDecls (thyBody thy) <>
+                                             prettyHOLThyDecls (HOLTheoryDecl (thyBody thy)) <>
                                              string "val _ = export_theory ()"
                                               <$$> empty
 

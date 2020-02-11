@@ -10,14 +10,14 @@ import Text.PrettyPrint.ANSI.Leijen
 import Data.Data
 import System.IO
 
-import InnerAST 
-import OuterAST
-import PrettyHelper 
-import Parser
+import Isabelle.InnerAST 
+import Isabelle.OuterAST
+import Isabelle.PrettyHelper 
+import Isabelle.Parser
 
 import ASTTranslator
 import PrettyPrint
-import PrettyWrapper
+-- import PrettyWrapper
 
 getFile :: IO (Maybe String)
 getFile = do
@@ -48,7 +48,7 @@ main = do
             pho4 <- return(prettify ho4)
             -- writeFile "/home/zoey/BilbyInCakeML/AfsSD" (show res)
 
-            handle <- openFile "AfsSDParsed.sml" WriteMode
-            hPutDoc handle (pretty (HOLTheory res))
+            handle <- openFile "AfsSDParsed2.thy" WriteMode
+            hPutDoc handle (pretty res)
             hClose handle
 
