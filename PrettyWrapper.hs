@@ -202,7 +202,7 @@ convert :: Theory Type Term -> HOLTheory HOLType HOLTerm
 convert = HOLTheory . ffmap HOLType . fmap HOLTerm
 
 instance (Pretty terms, Pretty types) =>  Pretty (HOLTheory terms types) where
-  pretty (HOLTheory thy) = pretty (thyImports thy) <$$>
+  pretty (HOLTheory thy) = pretty (HOLTheoryImports (thyImports thy)) <$$>
                            string "val _ = new_theory\"" <> string (thyName thy) <$$>
                            prettyThyDeclsHOL (map HOLTheoryDecl (thyBody thy)) <>
                            string "val _ = export_theory ()" <$$> empty
