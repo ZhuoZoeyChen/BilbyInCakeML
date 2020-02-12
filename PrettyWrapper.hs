@@ -198,11 +198,6 @@ newtype HOLDef types terms = HOLDef (Def types terms)
 newtype HOLAbbrev types terms = HOLAbbrev (Abbrev types terms)
 newtype HOLTheoryImports = HOLTheoryImports TheoryImports
 
-newtype Flip  f a b = Flip { unflip :: f b a }
-
-ffmap :: (Functor (Flip f a)) => (b -> b') -> f b a -> f b' a
-ffmap f = unflip . fmap f . Flip
-
 convert :: Theory Type Term -> HOLTheory HOLType HOLTerm
 convert = HOLTheory . ffmap HOLType . fmap HOLTerm
 
@@ -284,7 +279,7 @@ instance (Pretty terms, Pretty types) => Pretty (HOLRecord types terms) where
 
 -- FIXME: zoeyc
 instance (Pretty terms, Pretty types) => Pretty (HOLDTCons types terms) where
-  pretty (HOLDTCons (DTCons cn ts)) = pretty cn <+> (hsep . map (quote . pretty) $ ts)
+  pretty (HOLDTCons (DTCons cn ts)) = pretty cn <+> (hsep . map pretty $ ts)
 
 -- FIXME: zoeyc
 instance (Pretty terms, Pretty types) => Pretty (HOLDatatype types terms) where
@@ -345,12 +340,15 @@ instance Pretty HOLTheoremDecl where
     | otherwise = maybe empty string mbName <> pattrs
        where pattrs =  case attributes of
                   [] -> empty
-                  attrs -> brackets . sep . punctuate comma $ map pretty attrs
+                  attrs -> findSimp attrs
+
+findSimp :: [Attribute] -> Doc
+findSimp attrs = case attrs of 
+    []                     -> empty 
+    (Attribute nm args):xs -> if nm == "simp" then string "[simp]" else findSimp xs  
 
 instance Pretty HOLAttribute where
-  pretty (HOLAttribute (Attribute n lst))   = if (elem "simp" n:lst) -- FIXME: zoeyc
-    then brackets (string "simp") 
-    else empty
+  pretty (HOLAttribute attr) = findSimp [attr] 
 
 instance Pretty HOLProof where
   pretty (HOLProof (Proof methods proofEnd)) =
@@ -359,10 +357,10 @@ instance Pretty HOLProof where
 -- FIXME: proof translation needed / zoeyc
 
 instance Pretty HOLProofEnd where
-  pretty (HOLProofEnd e) = (string end) <$$> string "QED" <$$> empty
+  pretty (HOLProofEnd e) = end <$$> string "QED" <$$> empty
     where end = case e of
-                 ProofDone  -> emtpy
-                 ProofSorry -> "cheat"
+                 ProofDone  -> empty
+                 ProofSorry -> string "cheat"
 
 instance Pretty HOLMethod where
   pretty = prettyMethodTopLevelHOL 0
@@ -372,22 +370,22 @@ prettyMethodTopLevelHOL p (HOLMethod m) = case m of
   MethodModified m mm -> (parens $ prettyMethodHOL p m) <> pretty mm
   _                   -> parens $ prettyMethodHOL p m
 
-prettyMethodHOL :: Int -> HOLMethod -> Doc
-prettyMethodHOL p (HOLMethod m) = case m of
+prettyMethodHOL :: Int -> Method -> Doc
+prettyMethodHOL p m = case m of
     Method name args ->
       hsep . map string $ name:args
-    MethodModified m' mm -> prettyMethodTopLevel p m' <> pretty mm
+    MethodModified m' mm -> prettyMethodTopLevelHOL p (HOLMethod m') <> pretty (HOLMethodModifier mm)
     MethodCompound binOp m' m'' -> 
-      prettyBinOp p prettyMethodHOL (methodBinOpRec binOp) prettyMethod m' m''
+      prettyBinOp p prettyMethodHOL (methodBinOpRec binOp) prettyMethodHOL m' m''
     
 instance Pretty HOLMethodModifier where
   pretty (HOLMethodModifier m) = case m of
-    MMOptional  -> string "?"
-    MMOneOrMore -> string "+"
-    MMGoalRestriction mbI -> brackets $ maybe empty (string . show) $ mbI
+    MMOptional  -> string "?" -- FIXME: zoeyc 
+    MMOneOrMore -> string "+" -- FIXME: zoeyc
+    MMGoalRestriction mbI -> brackets $ maybe empty (string . show) $ mbI --FIXME: zoeyc
 
 instance (Pretty terms, Pretty types) => Pretty (HOLDef types terms) where
-  pretty (HOLDef def) = string "Definition" <> mbSig <$$> indent 2 (pretty (defTerm def)) <$$> string "End"
+  pretty (HOLDef def) = string "Definition" <+> mbSig <$$> indent 2 (pretty (defTerm def)) <$$> string "End"
     where mbSig = case defSig def of 
                     Just sig -> (string (sigName sig)) <$$> string ":" 
                     Nothing  -> empty
