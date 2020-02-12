@@ -1,4 +1,7 @@
-module PrettyWrapper 
+
+{-# LANGUAGE FlexibleContexts #-}
+
+module PrettyWrapper
 where 
 
 -- system imports 
@@ -53,8 +56,8 @@ instance Pretty HOLConst where
         IntLiteral    i -> pretty i
         CharLiteral   c -> pretty c
         StringLiteral s -> pretty s
-        Top    -> string "\\<top>" --FIXME: zoeyc
-        Bottom -> string "\\<bottom>" --FIXME: zoeyc
+        Top    -> string "\\top" 
+        Bottom -> string "\\bot"
 
 instance Pretty HOLArity where 
     pretty (HOLArity (Arity Nothing n)) = string n
@@ -77,14 +80,15 @@ prettyHOLTerm p (HOLTerm tm) = case tm of
   -- TermBinOp b t t'      -> (case b of
   --                             MetaImp -> prettyMetaImpHOL p t t'
   --                             _       -> prettyBinOpTermHOL p b t t')
-  TermUnOp u t          -> prettyUnOpTerm p u (HOLTerm t)
+  TermUnOp u t          -> prettyUnOpTermHOL p u (HOLTerm t)
   ListTerm l ts r       -> pretty l <> hcat (intersperse (string ", ") (map ((prettyHOLTerm termAppPrecHOL). HOLTerm) ts)) <> pretty r
   ConstTerm const       -> pretty const
   AntiTerm str          -> empty
   CaseOf e alts         -> parens (string "case" <+> pretty e <+> string "of" <$> sep (map ((text "|" <+> ). (prettyAssis "=>")) alts))
   RecordUpd upds        -> string "<|" <+> sep (punctuate (text ";") (map (prettyAssis ":=") upds)) <+> string "|>"
   RecordDcl dcls        -> string "<|" <+> sep (punctuate (text ";") (map (prettyAssis ":=") dcls)) <+> string "|>"
-  IfThenElse cond c1 c2 -> parens (string "if" <+> prettyHOLTerm p cond <+> string "then" <+> prettyHOLTerm p c1 <+> string "else" <+> prettyHOLTerm p c2)
+  IfThenElse cond c1 c2 -> parens (string "if" <+> prettyHOLTerm p (HOLTerm cond) <+> string "then" <+> 
+                            prettyHOLTerm p (HOLTerm c1) <+> string "else" <+> prettyHOLTerm p (HOLTerm c2))
   DoBlock dos           -> string "do" <$> sep (punctuate (text ";") (map pretty dos)) <$> string "od"
   DoItem  a b           -> pretty a <+> string "\\<leftarrow>" <+> pretty b 
   Set st                -> string "{" <> (case st of 
@@ -92,7 +96,7 @@ prettyHOLTerm p (HOLTerm tm) = case tm of
                               Range a b -> pretty a <> string ".." <> pretty b 
                               Listing lst -> sep (punctuate (text ";") (map pretty lst))) <> string "}"
                           -- FIXME: zoeyc
-  LetIn lt i            -> string "let" <+> sep (punctuate (text ";" <$>) (map (prettyAssis "=") lt)) <$$> string "in" <$$> pretty i
+  LetIn lt i            -> string "let" <+> vsep (punctuate (text ";") (map (prettyAssis "=") lt)) <$$> string "in" <$$> pretty i
                           -- FIXME: make indentation better / zoeyc
 prettyBinOpTermHOL :: Precedence -> TermBinOp -> HOLTerm -> HOLTerm -> Doc
 prettyBinOpTermHOL p b = prettyBinOp p prettyHOLTerm (termBinOpRec b) prettyHOLTerm
@@ -102,7 +106,7 @@ prettyUnOpTermHOL p u = prettyUnOp p (termUnOpRec u) prettyHOLTerm
 
 --
 -- [| P_1; ...; P_n |] ==> Q is syntactic sugar for P_1 ==> ... ==> P_n ==> Q
---
+--bimap
 -- @prettyMetaImp@ takes care of printing it that way.
 -- prettyMetaImpHOL :: Precedence -> Term -> Term -> Doc
 -- prettyMetaImpHOL p t t' = case t' of
@@ -121,7 +125,7 @@ prettyQuantifierHOL p q is t = prettyParen (p > quantifierPrec q) $ string (quan
                               (hsep . map (prettyHOLTerm 0. HOLTerm) $ is) <> char '.' <+> pretty (HOLTerm t)
 
 instance Pretty HOLPrimType where
-  pretty ty = string $ case ty of
+  pretty (HOLPrimType ty) = string $ case ty of
     IntT  -> "int"
     BoolT -> "bool"
     NatT  -> "nat"
@@ -141,14 +145,14 @@ prettyHOLType :: Precedence -> HOLType -> Doc
 prettyHOLType p (HOLType ty) =
     case ty of
       TyVar v          -> char '\'' <> string v
-      TyDatatype s tys -> prettyTypeVarsHOL (HOLType tys) <+> string s
+      TyDatatype s tys -> prettyTypeVarsHOL (map HOLType tys) <+> string s
       TyPrim t         -> pretty (HOLPrimType t)
       -- TyArrow is right associative
       TyArrow t t'     -> prettyParen (p > pa) $ prettyHOLType (pa+1) (HOLType t) <+>
-                          string tyArrowSymHOL <+> prettyType pa (HOLType t')
+                          string tyArrowSymHOL <+> prettyHOLType pa (HOLType t')
       -- TyTuple is right associative
       TyTuple t t'     -> prettyParen (p > pt) $ prettyHOLType (pt+1) (HOLType t) <+>
-                          string tyTupleSymHOL <+> prettyHOLType pt (HOLTtpe t')
+                          string tyTupleSymHOL <+> prettyHOLType pt (HOLType t')
       AntiType t       -> string t  -- FIXME: zilinc
   where
      pa = 1
@@ -194,16 +198,23 @@ newtype HOLDef types terms = HOLDef (Def types terms)
 newtype HOLAbbrev types terms = HOLAbbrev (Abbrev types terms)
 newtype HOLTheoryImports = HOLTheoryImports TheoryImports
 
-instance (Pretty terms, Pretty types) =>  Pretty (HOLTheory terms types) where
-  pretty (HOLTheory thy) = (pretty (thyImports thy) <$$>
-                                             string "val _ = new_theory\"" <> string (thyName thy) <> string ) <$$>
-                                             prettyHOLThyDecls (HOLTheoryDecl (thyBody thy)) <>
-                                             string "val _ = export_theory ()"
-                                              <$$> empty
+newtype Flip  f a b = Flip { unflip :: f b a }
 
-prettyHOLThyDecls :: (Pretty terms, Pretty types) => [HOLTheoryDecl types terms] -> Doc
-prettyHOLThyDecls [] = empty
-prettyHOLThyDecls thyDecls = (vsepPad . map pretty $ thyDecls) <$$> empty
+ffmap :: (Functor (Flip f a)) => (b -> b') -> f b a -> f b' a
+ffmap f = unflip . fmap f . Flip
+
+convert :: Theory Type Term -> HOLTheory HOLType HOLTerm
+convert = HOLTheory . ffmap HOLType . fmap HOLTerm
+
+instance (Pretty terms, Pretty types) =>  Pretty (HOLTheory terms types) where
+  pretty (HOLTheory thy) = pretty (thyImports thy) <$$>
+                           string "val _ = new_theory\"" <> string (thyName thy) <$$>
+                           prettyThyDeclsHOL (map HOLTheoryDecl (thyBody thy)) <>
+                           string "val _ = export_theory ()" <$$> empty
+
+prettyThyDeclsHOL :: (Pretty terms, Pretty types) => [HOLTheoryDecl types terms] -> Doc
+prettyThyDeclsHOL [] = empty
+prettyThyDeclsHOL thyDecls = (vsepPad . map pretty $ thyDecls) <$$> empty
 
 instance (Pretty terms, Pretty types) => Pretty (HOLTheoryDecl types terms) where
   pretty (HOLTheoryDecl d)  = case d of
@@ -211,36 +222,39 @@ instance (Pretty terms, Pretty types) => Pretty (HOLTheoryDecl types terms) wher
     OverloadedDef def sig -> empty
     Abbreviation abbrev   -> pretty $ HOLAbbrev abbrev
     ContextDecl c         -> pretty $ HOLContext c
-    LemmaDecl d'          -> pretty d'
-    LemmasDecl ld         -> pretty ld
-    TypeSynonym ts        -> pretty ts
-    TypeDeclDecl td       -> pretty td
-    ConstsDecl c          -> pretty c
-    RecordDecl fs         -> pretty fs
-    DataTypeDecl dt       -> pretty dt
-    FunFunction ff f      -> (if ff then string "fun" else string "function") <+> pretty f
+    LemmaDecl d'          -> pretty $ HOLLemma d'
+    LemmasDecl ld         -> pretty $ HOLLemmas ld
+    TypeSynonym ts        -> pretty $ HOLTypeSyn ts
+    TypeDeclDecl td       -> pretty $ HOLTypeDecl td
+    ConstsDecl c          -> pretty $ HOLConsts c
+    RecordDecl fs         -> pretty $ HOLRecord fs
+    DataTypeDecl dt       -> pretty $ HOLDatatype dt
+    FunFunction ff f      -> pretty $ HOLFunFunc f  --FIXME: zoeyc 
     TheoryString s        -> string s
-    PrimRec pr            -> pretty pr
-    Declare dc            -> pretty dc
--- FIXME : zoeyc
+    PrimRec pr            -> pretty $ HOLPrc pr
+    Declare dc            -> pretty $ HOLDcl dc
 
 instance (Pretty terms, Pretty types) => Pretty (HOLContext types terms) where
   pretty (HOLContext (Context name cDecls)) = string "context" <+> string name <+> string "begin" <$$> 
-                                 prettyThyDecls cDecls <> string "end" <$$> empty -- FIXME : zoeyc
+                                 prettyThyDeclsHOL (map HOLTheoryDecl cDecls) <> string "end" <$$> empty 
+-- FIXME : check context syntax / zoeyc
 
 instance (Pretty terms, Pretty types) => Pretty (HOLDcl types terms) where
   pretty (HOLDcl (Dcl dclName dclRules)) = if (elem "simp" dclRules) 
-    then string "export_rewrites \"" <> pretty dclName <> string "_def\""
+    then string "export_rewrites \"" <> pretty dclName <> string "_def\"" <$$> empty 
     else empty
 
 instance (Pretty terms, Pretty types) => Pretty (HOLPrc types terms) where
   pretty (HOLPrc (Prc thmDecl recCases)) =  string "Definition" <+> 
-    pretty thmDecl <> string ":" <$$> vsep (punctuate (text "/\\") (map prettyRec (HOLTerm recCases))) 
+    pretty thmDecl <> string ":" <$$> vsep (punctuate (text "/\\") (map prettyRecHOL recCases)) 
     <$$> string "End" <$$> empty
+
+prettyRecHOL :: (Pretty terms) => (terms, terms) -> Doc
+prettyRecHOL (p, e) = parens (pretty p <+> pretty "=" <+> pretty e)
 
 instance (Pretty terms, Pretty types) => Pretty (HOLLemma types terms) where
   pretty (HOLLemma (Lemma schematic thmDecl props proof)) = string "Theorem" <+>
-    pretty thmDecl <> string ":" <$$> indent 2 (vsep (punctuate (text "/\\") (map (parens. pretty . HOLTerm) props))) 
+    pretty thmDecl <> string ":" <$$> indent 2 (vsep (punctuate (text "/\\") (map (parens. pretty) props))) 
     <$$> indent 2 (pretty proof) <$$> empty
 
 instance (Pretty terms, Pretty types) => Pretty (HOLLemmas types terms) where
@@ -277,7 +291,7 @@ instance (Pretty terms, Pretty types) => Pretty (HOLDatatype types terms) where
   pretty (HOLDatatype (Datatype dtName dtCons tvs)) = string "Datatype:" <$$>
     prettyTypeVars (map TyVar tvs) <+>
     pretty dtName <+> string "=" <$$> (vsep $ punctuate (char '|') $ map (indent 2 . pretty) dtCons) 
-    <$$> string "End" <$$> Empty
+    <$$> string "End" <$$> empty
 
 -- FIXME: HOL4 does not have such concept as a "class" / zoeyc
 instance (Pretty terms, Pretty types) => Pretty (HOLClass types terms) where
@@ -288,7 +302,7 @@ instance (Pretty terms, Pretty types) => Pretty (HOLClassSpec types terms) where
 
 -- FIXME: zoeyc
 instance (Pretty terms, Pretty types) => Pretty (HOLInstantiation types terms) where
-  pretty (HOLInstantiation (Instantiation names arity body)) = emtpy
+  pretty (HOLInstantiation (Instantiation names arity body)) = empty
     -- string "instantiation" <+> sep (punctuate (string "and") (map pretty names))
     -- <+> string "::" <+> pretty arity
     -- <$> string "begin" 
@@ -296,7 +310,7 @@ instance (Pretty terms, Pretty types) => Pretty (HOLInstantiation types terms) w
 
 -- FIXME: zoeyc
 instance (Pretty terms, Pretty types) => Pretty (HOLInstance types terms) where
-  pretty (HOLInstance head body) = empty
+  pretty i = empty
     -- string "instance" <+> pretty head
     -- <$> prettyThyDecls body
 
@@ -322,25 +336,25 @@ instance (Pretty types, Pretty terms) => Pretty (HOLFunFunc types terms) where
                             <$$> align (pretty bd)
 
 instance (Pretty types, Pretty terms) => Pretty (HOLEquations types terms) where
-  pretty (HOLEquations (Equations terms)) = vsep $ punctuate (space <> string "/\\") $ map (bracketL. pretty. HOLTerms) terms
+  pretty (HOLEquations (Equations terms)) = vsep $ punctuate (space <> string "/\\") $ map (parens. pretty) terms
 
 instance Pretty HOLTheoremDecl where
   pretty (HOLTheoremDecl (TheoremDecl mbName attributes))
     | Nothing <- mbName, null attributes =
         error "In TheoremDecl, name == Nothing and attributes == [] is not allowed"
     | otherwise = maybe empty string mbName <> pattrs
-       where pattrs = if (elem "simp" attributes) 
-                      then bracketL (string "simp")
-                      else empty
+       where pattrs =  case attributes of
+                  [] -> empty
+                  attrs -> brackets . sep . punctuate comma $ map pretty attrs
 
 instance Pretty HOLAttribute where
-  pretty (HOLAttribute (Attribute lst))   = if (elem "simp" lst) 
-    then bracketL (string "simp") 
+  pretty (HOLAttribute (Attribute n lst))   = if (elem "simp" n:lst) -- FIXME: zoeyc
+    then brackets (string "simp") 
     else empty
 
 instance Pretty HOLProof where
   pretty (HOLProof (Proof methods proofEnd)) =
-    (vsep (punctuate (string ">>") (map (\m -> string "APPLY_TAC" <+> bracketL (pretty (HOLMethod m))) methods))) 
+    (vsep (punctuate (string ">>") (map (\m -> string "APPLY_TAC" <+> brackets (pretty (HOLMethod m))) methods))) 
     <$$> pretty proofEnd
 -- FIXME: proof translation needed / zoeyc
 
@@ -373,7 +387,7 @@ instance Pretty HOLMethodModifier where
     MMGoalRestriction mbI -> brackets $ maybe empty (string . show) $ mbI
 
 instance (Pretty terms, Pretty types) => Pretty (HOLDef types terms) where
-  pretty (HOLDef def) = string "Definition" <> mbSig <$$> indent 2 (pretty . HOLTerm (defTerm def)) <$$> string "End"
+  pretty (HOLDef def) = string "Definition" <> mbSig <$$> indent 2 (pretty (defTerm def)) <$$> string "End"
     where mbSig = case defSig def of 
                     Just sig -> (string (sigName sig)) <$$> string ":" 
                     Nothing  -> empty

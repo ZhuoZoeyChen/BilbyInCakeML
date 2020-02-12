@@ -17,7 +17,7 @@ import Isabelle.Parser
 
 import ASTTranslator
 import PrettyPrint
--- import PrettyWrapper
+import PrettyWrapper
 
 getFile :: IO (Maybe String)
 getFile = do
@@ -48,7 +48,7 @@ main = do
             pho4 <- return(prettify ho4)
             -- writeFile "/home/zoey/BilbyInCakeML/AfsSD" (show res)
 
-            handle <- openFile "AfsSDParsed2.thy" WriteMode
-            hPutDoc handle (pretty res)
+            handle <- openFile "AfsSDParsed.sml" WriteMode
+            hPutDoc handle (pretty (convert res))
             hClose handle
 
