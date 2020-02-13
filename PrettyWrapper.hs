@@ -13,6 +13,7 @@ import Data.Char (ord)
 import Data.List
 import Data.Data
 import Data.Typeable
+import System.FilePath.Posix
 
 -- Isabelle imports
 import Isabelle.InnerAST
@@ -203,7 +204,9 @@ convert = HOLTheory . ffmap HOLType . fmap HOLTerm
 
 instance (Pretty terms, Pretty types) =>  Pretty (HOLTheory terms types) where
   pretty (HOLTheory thy) = pretty (HOLTheoryImports (thyImports thy)) <$$>
-                           string "val _ = new_theory\"" <> string (thyName thy) <$$>
+                           enableDoBlock <$>
+                           string "val _ = new_theory\"" <> string (thyName thy) <>
+                           string "\"" <$$>
                            prettyThyDeclsHOL (map HOLTheoryDecl (thyBody thy)) <>
                            string "val _ = export_theory ()" <$$> empty
 
@@ -415,8 +418,15 @@ instance (Pretty terms, Pretty types) => Pretty (HOLAbbrev types terms) where
                     Nothing  -> empty
 
 instance Pretty HOLTheoryImports where
-  pretty (HOLTheoryImports (TheoryImports is)) = string "open" <+> fillSep (map string is)
+  pretty (HOLTheoryImports (TheoryImports is)) = vsep (map openTheory is)
 
+openTheory :: String -> Doc 
+openTheory s = string  "open"
+            <+> (string . takeFileName . dropWhile (== '\"') . dropWhileEnd (== '\"') $ s)
+            <> string "Theory;"
+
+enableDoBlock :: Doc 
+enableDoBlock = string "val _ = ParseExtras.temp_loose_equality();\nval _ = patternMatchesLib.ENABLE_PMATCH_CASES();\nval _ = monadsyntax.temp_add_monadsyntax();"
 -- smart constructor
 
 mkComment :: String -> TheoryDecl types terms
