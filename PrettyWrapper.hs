@@ -159,7 +159,6 @@ prettyHOLType p (HOLType ty) =
      pa = 1
      pt = 2
 
-
 ------------------------------------------------------------------------
 
 ---------------         Outer                ---------------------------
@@ -195,7 +194,7 @@ newtype HOLProofEnd = HOLProofEnd ProofEnd
 newtype HOLMethod = HOLMethod Method 
 newtype HOLMethodModifier = HOLMethodModifier MethodModifier 
 newtype HOLDef types terms = HOLDef (Def types terms)
--- newtype HOLSig types = HOLSig (Sig types)
+newtype HOLSig types = HOLSig (Sig types)
 newtype HOLAbbrev types terms = HOLAbbrev (Abbrev types terms)
 newtype HOLTheoryImports = HOLTheoryImports TheoryImports
 
@@ -244,7 +243,7 @@ instance (Pretty terms, Pretty types) => Pretty (HOLDcl types terms) where
 
 instance (Pretty terms, Pretty types) => Pretty (HOLPrc types terms) where
   pretty (HOLPrc (Prc thmDecl recCases)) =  string "Definition" <+> 
-    pretty thmDecl <> string ":" <$$> vsep (punctuate (text "/\\") (map prettyRecHOL recCases)) 
+    pretty (fmap HOLSig thmDecl) <> string ":" <$$> vsep (punctuate (text "/\\") (map prettyRecHOL recCases)) 
     <$$> string "End" <$$> empty
 
 prettyRecHOL :: (Pretty terms) => (terms, terms) -> Doc
@@ -252,7 +251,7 @@ prettyRecHOL (p, e) = parens (pretty p <+> pretty "=" <+> pretty e)
 
 instance (Pretty terms, Pretty types) => Pretty (HOLLemma types terms) where
   pretty (HOLLemma (Lemma schematic thmDecl props proof)) = string "Theorem" <+>
-    pretty thmDecl <> string ":" <$$> indent 2 (vsep (punctuate (text "/\\") (map (parens. pretty) props))) 
+    pretty (fmap HOLTheoremDecl thmDecl) <> string ":" <$$> indent 2 (vsep (punctuate (text "/\\") (map (parens. pretty) props))) 
     <$$> indent 2 (pretty proof) <$$> empty
 
 instance (Pretty terms, Pretty types) => Pretty (HOLLemmas types terms) where
@@ -280,7 +279,6 @@ instance (Pretty terms, Pretty types) => Pretty (HOLRecord types terms) where
     (vsep (punctuate (string ";") (map (\rf -> let RecField n t = rf in indent 2 (pretty n <+> string ":" <+> pretty t)) rFields)))
     <$$> string "|>" <$$> string "End" <$$> empty
 
--- FIXME: zoeyc
 instance (Pretty terms, Pretty types) => Pretty (HOLDTCons types terms) where
   pretty (HOLDTCons (DTCons cn ts)) = pretty cn <+> (hsep . map pretty $ ts)
 
@@ -288,7 +286,7 @@ instance (Pretty terms, Pretty types) => Pretty (HOLDTCons types terms) where
 instance (Pretty terms, Pretty types) => Pretty (HOLDatatype types terms) where
   pretty (HOLDatatype (Datatype dtName dtCons tvs)) = string "Datatype:" <$$>
     prettyTypeVars (map TyVar tvs) <+>
-    pretty dtName <+> string "=" <$$> (vsep $ punctuate (char '|') $ map (indent 2 . pretty) dtCons) 
+    pretty dtName <+> string "=" <$$> (vsep $ punctuate (char '|') $ map (indent 2 . pretty. HOLDTCons) dtCons) 
     <$$> string "End" <$$> empty
 
 -- FIXME: HOL4 does not have such concept as a "class" / zoeyc
@@ -329,7 +327,7 @@ instance Pretty HOLClassRel where
 
 -- FIXME: zoeyc
 instance (Pretty types, Pretty terms) => Pretty (HOLFunFunc types terms) where
-  pretty (HOLFunFunc (FunFunc sig bd)) = string "Definition" <+>  (encloseSep empty empty (string "and" <> space) (map pretty sig)) -- FIXME: `and' on a new line / zilinc
+  pretty (HOLFunFunc (FunFunc sigs bd)) = string "Definition" <+>  (encloseSep empty empty (string "and" <> space) (map (pretty . HOLSig) sigs)) -- FIXME: `and' on a new line / zilinc
                             <+> string "where"
                             <$$> align (pretty bd)
 
@@ -390,10 +388,9 @@ instance Pretty HOLMethodModifier where
 instance (Pretty terms, Pretty types) => Pretty (HOLDef types terms) where
   pretty (HOLDef def) = string "Definition" <+> mbSig <$$> indent 2 (pretty (defTerm def)) <$$> string "End"
     where mbSig = case defSig def of 
-                    Just sig -> (string (sigName sig)) <$$> string ":" 
+                    Just sig -> (string (sigName sig)) <> string ":" 
                     Nothing  -> empty
 
--- FIXME: zoeyc
 prettyOvHOL specDef sig = string "overloading" <> mbSig
                   <$$> string "begin"
                   <$$> indent 2 mbDefn
@@ -401,7 +398,7 @@ prettyOvHOL specDef sig = string "overloading" <> mbSig
     where mbSig = case defSig specDef of 
                     Just specSig ->
                       empty
-                        <$$> indent 2 (pretty specSig)
+                        <$$> indent 2 (pretty (HOLSig specSig))
                           <> string "="
                           <> pretty sig
                     _ -> empty
@@ -411,11 +408,17 @@ prettyOvHOL specDef sig = string "overloading" <> mbSig
                 string "definition " <> pretty specSig <> string ": " <> quote (pretty (defTerm specDef))
               _ -> empty
 
+instance Pretty types => Pretty (HOLSig types) where
+  pretty (HOLSig d) = string (sigName d)
+
 instance (Pretty terms, Pretty types) => Pretty (HOLAbbrev types terms) where
-  pretty (HOLAbbrev a) = string "abbreviation" <+> mbSig <$$> (indent 2 (quote (pretty (abbrevTerm a))))
+  pretty (HOLAbbrev a) = string "Overload" <+> mbSig <+> (indent 2 (holQuote (pretty (abbrevTerm a))))
     where mbSig = case abbrevSig a of 
-                    Just sig -> pretty sig <$$> string "where" 
+                    Just sig -> pretty (HOLSig sig) <+> string "="
                     Nothing  -> empty
+
+holQuote :: Doc -> Doc
+holQuote doc = string "``" <>  doc <> string "``"
 
 instance Pretty HOLTheoryImports where
   pretty (HOLTheoryImports (TheoryImports is)) = vsep (map openTheory is)

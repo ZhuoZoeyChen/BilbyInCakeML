@@ -45,8 +45,9 @@ main = do
     case eRes of
         Left err  -> printf "Error parsing %s\n%s\n" file (show err)
         Right res -> do 
-            ho4 <- return(translate res) 
-            pho4 <- return(prettify ho4)
+            -- ho4 <- return(translate res) 
+            -- pho4 <- return(prettify ho4)
+            
             -- writeFile "/home/zoey/BilbyInCakeML/AfsSD" (show res)
 
             handle <- openFile "AfsSDParsed.sml" WriteMode

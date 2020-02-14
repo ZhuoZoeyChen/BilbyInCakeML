@@ -21,9 +21,9 @@ Type  file_data =  page list;
 
 Datatype:
  afs_inode_type =
-  IDir " dir"|
-  IReg " file_data"|
-  ILnk " U8 list"
+  IDir  dir|
+  IReg  file_data|
+  ILnk  U8 list
 End
 
 
@@ -71,80 +71,57 @@ afs_state = <|
 End
 
 
-Definition a_afs_updated_n
-:
+Definition a_afs_updated_n:
   a_afs_updated_n n afs_st updates = fold id (take n updates) afs_st
 End
 
 export_rewrites "a_afs_updated_n_def"
 
 
-Definition a_afs_updated
-:
+Definition a_afs_updated:
   a_afs_updated afs_st updates \<equiv> a_afs_updated_n (length updates) afs_st updates
 End
 
-Definition updated_afs
-:
+Definition updated_afs:
   updated_afs adata \<equiv> a_afs_updated (a_medium_afs adata) (a_medium_updates adata)
 End
 
-abbreviation i_type_dir :: " afs_inode_type \<Rightarrow>  dir"
-where
-  "i_type_dir it \<equiv> (case it of
-  | IDir dir => dir)"
+Overload i_type_dir =   ``i_type_dir it \<equiv> (case it of
+                        | IDir dir => dir)``
 
-abbreviation i_dir :: " afs_inode \<Rightarrow>  dir"
-where
-  "i_dir i \<equiv> i_type_dir (i_type i)"
+Overload i_dir =   ``i_dir i \<equiv> i_type_dir (i_type i)``
 
-Definition i_dir_update
-:
+Definition i_dir_update:
   i_dir_update m i \<equiv> i <| i_type := IDir (m (i_dir i)) |>
 End
 
 export_rewrites "i_dir_update_def"
 
 
-abbreviation i_type_data :: " afs_inode_type \<Rightarrow>  file_data"
-where
-  "i_type_data it \<equiv> (case it of
-  | IReg data => data)"
+Overload i_type_data =   ``i_type_data it \<equiv> (case it of
+                         | IReg data => data)``
 
-abbreviation i_data :: " afs_inode \<Rightarrow>  file_data"
-where
-  "i_data i \<equiv> i_type_data (i_type i)"
+Overload i_data =   ``i_data i \<equiv> i_type_data (i_type i)``
 
-abbreviation i_data_update :: "( file_data \<Rightarrow>  file_data) \<Rightarrow>  afs_inode \<Rightarrow>  afs_inode"
-where
-  "i_data_update m i \<equiv> i <| i_type := IReg (m (i_data i)) |>"
+Overload i_data_update =   ``i_data_update m i \<equiv> i <| i_type := IReg (m (i_data i)) |>``
 
-abbreviation i_type_path :: " afs_inode_type \<Rightarrow>  byte list"
-where
-  "i_type_path it \<equiv> (case it of
-  | ILnk path => path)"
+Overload i_type_path =   ``i_type_path it \<equiv> (case it of
+                         | ILnk path => path)``
 
-abbreviation i_path :: " afs_inode \<Rightarrow>  byte list"
-where
-  "i_path i \<equiv> i_type_path (i_type i)"
+Overload i_path =   ``i_path i \<equiv> i_type_path (i_type i)``
 
-abbreviation i_path_update :: "( byte list \<Rightarrow>  byte list) \<Rightarrow>  afs_inode \<Rightarrow>  afs_inode"
-where
-  "i_path_update m i \<equiv> i <| i_type := ILnk (m (i_path i)) |>"
+Overload i_path_update =   ``i_path_update m i \<equiv> i <| i_type := ILnk (m (i_path i)) |>``
 
-Definition i_size_from_afs_inode_type :: " afs_inode_type \<Rightarrow>  U64":
+Definition i_size_from_afs_inode_type:
 (i_size_from_afs_inode_type (IDir dir) = undefined)/\
 (i_size_from_afs_inode_type (IReg data) = count (concat data))/\
 (i_size_from_afs_inode_type (ILnk path) = count path)
 End
 
 
-abbreviation i_size_from_type :: " afs_inode \<Rightarrow>  U64"
-where
-  "i_size_from_type i \<equiv> i_size_from_afs_inode_type $ i_type i"
+Overload i_size_from_type =   ``i_size_from_type i \<equiv> i_size_from_afs_inode_type $ i_type i``
 
-Definition afs_inode_to_vnode
-:
+Definition afs_inode_to_vnode:
   afs_inode_to_vnode i \<equiv> <| v_ino := i_ino i;
   v_nlink := i_nlink i;
   v_size := i_size i;
@@ -156,8 +133,7 @@ Definition afs_inode_to_vnode
   v_flags := i_flags i |>
 End
 
-Definition afs_inode_from_vnode
-:
+Definition afs_inode_from_vnode:
   afs_inode_from_vnode v \<equiv> <| i_type := (if v_mode v AND s_IFREG \<noteq> 0 then IReg [] else (if v_mode v AND s_IFDIR \<noteq> 0 then IDir Map.empty else ILnk []));
   i_ino := v_ino v;
   i_nlink := v_nlink v;
@@ -170,18 +146,15 @@ Definition afs_inode_from_vnode
   i_flags := v_flags v |>
 End
 
-Definition error_if_readonly
-:
+Definition error_if_readonly:
   error_if_readonly as \<equiv> return $ (if a_is_readonly as then Error (eRoFs, as) else Success as)
 End
 
-Definition nondet_error
-:
+Definition nondet_error:
   nondet_error errs f \<equiv> CogentMonad.select errs >>= (return o f)
 End
 
-Definition afs_alloc_inum
-:
+Definition afs_alloc_inum:
   afs_alloc_inum as \<equiv> do
   avail_inums \<leftarrow> return $ -dom as;
   opt_inum \<leftarrow> select $ {option.None} \<union> option.Some ` avail_inums;
@@ -189,8 +162,7 @@ Definition afs_alloc_inum
   od
 End
 
-Definition afs_get_current_time
-:
+Definition afs_get_current_time:
   afs_get_current_time afs \<equiv> do
   time' \<leftarrow> return (a_current_time afs);
   time \<leftarrow> select {x. x \<ge> time'};
@@ -198,8 +170,7 @@ Definition afs_get_current_time
   od
 End
 
-Definition afs_init_inode
-:
+Definition afs_init_inode:
   afs_init_inode adata vdir vnode mode \<equiv> do
   (adata, time) \<leftarrow> afs_get_current_time adata;
   uid \<leftarrow> return (v_uid vdir);
@@ -218,16 +189,14 @@ Definition afs_init_inode
   od
 End
 
-Definition read_afs_inode
-:
+Definition read_afs_inode:
   read_afs_inode adata ino \<equiv> return (Success $ the $ updated_afs adata ino) \<sqinter> nondet_error {eIO;
   eNoMem;
   eInval;
   eBadF} Error
 End
 
-Definition afs_apply_updates_nondet
-:
+Definition afs_apply_updates_nondet:
   afs_apply_updates_nondet afs \<equiv> do
   (to_apply, updates) \<leftarrow> {(ap, up). ap @ up = a_medium_updates afs};
   return (afs \<lparr> a_medium_afs := fold id to_apply (a_medium_afs afs),
@@ -235,8 +204,7 @@ Definition afs_apply_updates_nondet
   od
 End
 
-Definition afs_update
-:
+Definition afs_update:
   afs_update afs upd \<equiv> do
   afs \<leftarrow> afs_apply_updates_nondet (afs \<lparr> a_medium_updates := a_medium_updates afs @ [upd] \<rparr>);
   (if a_medium_updates afs = [] then return (afs, Success ()) else return (afs, Success ()) \<sqinter> nondet_error {eIO,
@@ -245,8 +213,7 @@ Definition afs_update
   od
 End
 
-Definition afs_create
-:
+Definition afs_create:
   afs_create afs parentdir name mode vnode \<equiv> (if a_is_readonly afs then return ((afs, parentdir, vnode), Error eRoFs) else do
   r \<leftarrow> afs_init_inode afs parentdir vnode (mode OR s_IFREG);
   (case r of
@@ -281,8 +248,7 @@ Definition afs_create
   od)
 End
 
-Definition afs_sync
-:
+Definition afs_sync:
   afs_sync afs \<equiv> (if a_is_readonly afs then return (afs, Error eRoFs) else do
   n \<leftarrow> select {0..length (a_medium_updates afs)};
   let updates = a_medium_updates afs;
@@ -298,8 +264,7 @@ Definition afs_sync
   od)
 End
 
-Definition afs_unlink
-:
+Definition afs_unlink:
   afs_unlink afs parentdir name vnode \<equiv> do
   r \<leftarrow> error_if_readonly afs;
   (case r of
@@ -323,8 +288,7 @@ Definition afs_unlink
   od
 End
 
-Definition afs_iget
-:
+Definition afs_iget:
   afs_iget afs inum vnode \<equiv> (if inum \<in> dom (updated_afs afs) then do
   r \<leftarrow> read_afs_inode afs inum;
   (case r of
@@ -333,8 +297,7 @@ Definition afs_iget
   od else return (vnode, Error eNoEnt))
 End
 
-Definition afs_lookup
-:
+Definition afs_lookup:
   afs_lookup afs vdir name \<equiv> (if wordarray_length name > bilbyFsMaxNameLen + 1 then return (Error eNameTooLong) else do
   r \<leftarrow> read_afs_inode afs (v_ino vdir);
   (case r of
@@ -345,8 +308,7 @@ Definition afs_lookup
   od)
 End
 
-Definition afs_link
-:
+Definition afs_link:
   afs_link afs parentdir name vnode \<equiv> (if a_is_readonly afs then return ((afs, parentdir, vnode), Error eRoFs) else do
   r \<leftarrow> read_afs_inode afs (v_ino parentdir);
   (case r of
@@ -377,8 +339,7 @@ Definition afs_link
   od)
 End
 
-Definition afs_mkdir
-:
+Definition afs_mkdir:
   afs_mkdir afs parentdir name mode vnode \<equiv> (if a_is_readonly afs then return ((afs, parentdir, vnode), Error eRoFs) else do
   r \<leftarrow> afs_init_inode afs parentdir vnode (mode OR s_IFDIR);
   (case r of
@@ -417,8 +378,7 @@ Definition afs_mkdir
   od)
 End
 
-Definition afs_rmdir
-:
+Definition afs_rmdir:
   afs_rmdir afs parentdir name vnode \<equiv> do
   r \<leftarrow> error_if_readonly afs;
   (case r of
@@ -443,8 +403,7 @@ Definition afs_rmdir
   od
 End
 
-Definition afs_symlink
-:
+Definition afs_symlink:
   afs_symlink afs parentdir name symname mode vnode \<equiv> (if a_is_readonly afs then return ((afs, parentdir, vnode), Error eRoFs) else (if wordarray_length symname > bilbyFsBlockSize then return ((afs, parentdir, vnode), Error eNameTooLong) else do
   r \<leftarrow> afs_init_inode afs parentdir vnode (mode OR s_IFLNK OR s_IRWXUGO);
   (case r of
@@ -482,13 +441,11 @@ Definition afs_symlink
   od))
 End
 
-Definition pad_block
-:
+Definition pad_block:
   pad_block data len \<equiv> data @ drop (length data) (replicate (unat len) 0)
 End
 
-Definition afs_readpage
-:
+Definition afs_readpage:
   afs_readpage afs vnode block buf \<equiv> (if block > v_size vnode >> unat bilbyFsBlockShift then return ((afs, vnode, WordArrayT.make (replicate (unat bilbyFsBlockSize) 0)), Error eNoEnt) else (if block = v_size vnode >> unat bilbyFsBlockShift \<and> v_size vnode mod (ucast bilbyFsBlockSize) = 0 then return ((afs, vnode, buf), Success ()) else do
   err \<leftarrow> {eIO,
   eNoMem,
@@ -499,8 +456,7 @@ Definition afs_readpage
   od))
 End
 
-Definition afs_write_begin
-:
+Definition afs_write_begin:
   afs_write_begin afs vnode pos len buf \<equiv> (if a_is_readonly afs then return ((afs, vnode, buf), Error eRoFs) else do
   ((afs, vnode, buf'), r) \<leftarrow> afs_readpage afs vnode (pos >> unat bilbyFsBlockShift) buf;
   (case r of
@@ -509,8 +465,7 @@ Definition afs_write_begin
   od)
 End
 
-Definition afs_write_end
-:
+Definition afs_write_end:
   afs_write_end afs vnode pos len addr \<equiv> (if a_is_readonly afs then return ((afs, vnode), Error eRoFs) else do
   newsize \<leftarrow> return (max (v_size vnode) (pos + ucast len));
   (afs, time) \<leftarrow> afs_get_current_time afs;
@@ -524,13 +479,11 @@ Definition afs_write_end
   od)
 End
 
-Definition afs_evict_inode
-:
+Definition afs_evict_inode:
   afs_evict_inode afs vnode \<equiv> (if a_is_readonly afs then return (afs, Error eRoFs) else (if v_nlink vnode \<noteq> 0 then return (afs, Success ()) else afs_update afs (\<lambda>f. f ((v_ino vnode) := None))))
 End
 
-Definition afs_follow_link
-:
+Definition afs_follow_link:
   afs_follow_link afs vnode path \<equiv> do
   r \<leftarrow> read_afs_inode afs (v_ino vnode);
   (case r of
@@ -540,8 +493,7 @@ Definition afs_follow_link
   od
 End
 
-Definition afs_rename
-:
+Definition afs_rename:
   afs_rename afs vdir oldname oldvnode newname onewvnode \<equiv> (if a_is_readonly afs then return ((afs, vdir, oldvnode, onewvnode), Error eRoFs) else do
   old_is_dir \<leftarrow> return (S_ISDIR (v_mode oldvnode));
   ncnt \<leftarrow> return (if old_is_dir then (v_nlink oldvnode - 1) else (v_nlink oldvnode));
@@ -586,8 +538,7 @@ Definition afs_rename
   od)
 End
 
-Definition afs_move
-:
+Definition afs_move:
   afs_move afs oldvdir oldname oldvnode newvdir newname onewvnode \<equiv> (if a_is_readonly afs then return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error eRoFs) else do
   old_is_dir \<leftarrow> return (S_ISDIR (v_mode oldvnode));
   ncnt \<leftarrow> return (if old_is_dir then (v_nlink oldvnode - 1) else (v_nlink oldvnode));
@@ -651,16 +602,14 @@ Definition afs_move
   od)
 End
 
-Definition afs_dir_emit
-:
+Definition afs_dir_emit:
   afs_dir_emit \<equiv> \<lambda>(pos, entries) name ino vtype. do
   bool \<leftarrow> select UNIV;
   (if bool then return (Iterate (pos, entries ((\<alpha>wa name) := None))) else return (Break (pos, entries ((\<alpha>wa name) := None))))
   od
 End
 
-Definition afs_readdir
-:
+Definition afs_readdir:
   afs_readdir afs rdctx obrdctx vdir = do
   r \<leftarrow> read_afs_inode afs (v_ino vdir);
   (case r of
@@ -691,8 +640,7 @@ vfsstat = <|
 End
 
 
-Definition afs_getattr
-:
+Definition afs_getattr:
   afs_getattr afs stat vnode \<equiv> return (afs, stat <| vs_ino := v_ino vnode;
   vs_nlink := v_nlink vnode;
   vs_mode := v_mode vnode;
@@ -718,13 +666,11 @@ iattr = <|
 End
 
 
-Definition iattr_is_set
-:
+Definition iattr_is_set:
   iattr_is_set iattr flag \<equiv> iattr_valid iattr AND flag \<noteq> 0
 End
 
-Definition afs_setattr
-:
+Definition afs_setattr:
   afs_setattr afs iattr vnode \<equiv> let vnode' = (if iattr_is_set iattr vfs_ATTR_MODE then vnode \<lparr> v_mode := iattr_mode iattr \<rparr> else vnode);
   vnode' = (if iattr_is_set iattr vfs_ATTR_UID then vnode' \<lparr> v_uid := iattr_uid iattr \<rparr> else vnode');
   vnode' = (if iattr_is_set iattr vfs_ATTR_GID then vnode' \<lparr> v_gid := iattr_gid iattr \<rparr> else vnode');
