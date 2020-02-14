@@ -223,7 +223,7 @@ Definition afs_create_def:
   (case r of
   | Error e => return ((afs, parentdir, vnode), Error e)
   | Success dir => do
-  r <- return (Success $ i_dir_update (\d. d ((alphaalphawa name) -> v_ino vnode)) dir) TODO: Alt return (Error eNameTooLong);
+  r <- return (Success $ i_dir_update (\d. d ((ALPHAALPHAwa name) -> v_ino vnode)) dir) TODO: Alt return (Error eNameTooLong);
   (case r of
   | Error e => return ((afs, parentdir, vnode), Error e)
   | Success dir => do
@@ -277,7 +277,7 @@ Definition afs_unlink_def:
   i_ctime := time |>);
   newsize <- select {sz. sz < v_size parentdir};
   dir_ino <- return (v_ino parentdir);
-  (afs, r) <- afs_update afs (\f. f (dir_ino -> i_dir_update (\d. d ((alphawa name) |-> option.None)) (the $ f dir_ino) <| i_ctime := time;
+  (afs, r) <- afs_update afs (\f. f (dir_ino -> i_dir_update (\d. d ((ALPHAwa name) |-> option.None)) (the $ f dir_ino) <| i_ctime := time;
   i_mtime := time |>, (v_ino vnode) -> inode));
   (case r of
   | Error e => return ((afs, parentdir, vnode), Error e)
@@ -306,7 +306,7 @@ Definition afs_lookup_def:
   r <- read_afs_inode afs (v_ino vdir);
   (case r of
   | Error e => return (Error e)
-  | Success dir => (case i_dir dir (\<alpha>wa name) of
+  | Success dir => (case i_dir dir (ALPHAwa name) of
   | None => return (Error eNoEnt)
   | Some ino => return (Success ino)))
   od)
@@ -318,7 +318,7 @@ Definition afs_link_def:
   (case r of
   | Error e => return ((afs, parentdir, vnode), Error e)
   | Success dir => do
-  r <- return (Success $ i_dir_update (\d. d ((alphawa name) -> v_ino vnode)) dir) TODO: Alt return (Error eNameTooLong);
+  r <- return (Success $ i_dir_update (\d. d ((ALPHAwa name) -> v_ino vnode)) dir) TODO: Alt return (Error eNameTooLong);
   (case r of
   | Error e => return ((afs, parentdir, vnode), Error e)
   | Success dir => do
@@ -353,7 +353,7 @@ Definition afs_mkdir_def:
   (case r of
   | Error e => return ((afs, parentdir, vnode), Error e)
   | Success dir => do
-  r <- return (Success $ i_dir_update (\d. d ((alphawa name) -> v_ino vnode)) dir) TODO: Alt return (Error eNameTooLong);
+  r <- return (Success $ i_dir_update (\d. d ((ALPHAwa name) -> v_ino vnode)) dir) TODO: Alt return (Error eNameTooLong);
   (case r of
   | Error e => return ((afs, parentdir, vnode), Error e)
   | Success dir => do
@@ -397,7 +397,7 @@ Definition afs_rmdir_def:
   v_ctime := time;
   v_mtime := time;
   v_size := newsize |>);
-  (afs, r) <- afs_update afs (\f. f (dir_ino -> i_dir_update (\d. d ((alphawa name) |-> option.None)) (the $ f dir_ino) <| i_ctime := time;
+  (afs, r) <- afs_update afs (\f. f (dir_ino -> i_dir_update (\d. d ((ALPHAwa name) |-> option.None)) (the $ f dir_ino) <| i_ctime := time;
   i_mtime := time;
   i_nlink := v_nlink parentdir' |>, (v_ino vnode) -> inode));
   (case r of
@@ -417,7 +417,7 @@ Definition afs_symlink_def:
   (case r of
   | Error e => return ((afs, parentdir, vnode), Error e)
   | Success dir => do
-  r <- return (Success $ i_dir_update (\d. d ((alphawa name) -> v_ino vnode)) dir) TODO: Alt return (Error eNameTooLong);
+  r <- return (Success $ i_dir_update (\d. d ((ALPHAwa name) -> v_ino vnode)) dir) TODO: Alt return (Error eNameTooLong);
   (case r of
   | Error e => return ((afs, parentdir, vnode), Error e)
   | Success dir => do
@@ -431,7 +431,7 @@ Definition afs_symlink_def:
   i_mtime := time;
   i_size := v_size vnode |>);
   inode <- return (afs_inode_from_vnode vnode);
-  inode <- return (i_path_update (\_. alphawa symname) inode);
+  inode <- return (i_path_update (\_. ALPHAwa symname) inode);
   (afs, r) <- afs_update afs (\f. f ((i_ino inode) -> inode, (i_ino dir) -> dir));
   (case r of
   | Error e => return ((afs, parentdir, vnode), Error e)
@@ -476,7 +476,7 @@ Definition afs_write_end_def:
   vnode' <- return (vnode <| v_size := newsize;
   v_mtime := time |>);
   block <- return (unat $ pos >> unat bilbyFsBlockShift);
-  (afs, r) <- afs_update afs (\f. f ((v_ino vnode) -> i_data_update (\data. data [block |-> alphawa addr]) (the $ f (v_ino vnode)) <| i_size := newsize |>));
+  (afs, r) <- afs_update afs (\f. f ((v_ino vnode) -> i_data_update (\data. data [block |-> ALPHAwa addr]) (the $ f (v_ino vnode)) <| i_size := newsize |>));
   (case r of
   | Error e => return ((afs, vnode), Error e)
   | Success () => return ((afs, vnode'), Success ()))
@@ -511,7 +511,7 @@ Definition afs_rename_def:
   (case r of
   | Error e => return ((afs, vdir, oldvnode, onewvnode), Error e)
   | Success dir => do
-  r <- return (Success $ i_dir_update (\d. d ((alphawa oldname) |-> None, (alphawa newname) |-> Some (v_ino oldvnode))) dir) TODO: Alt return (Error eNameTooLong);
+  r <- return (Success $ i_dir_update (\d. d ((ALPHAwa oldname) |-> None, (ALPHAwa newname) |-> Some (v_ino oldvnode))) dir) TODO: Alt return (Error eNameTooLong);
   (case r of
   | Error e => return ((afs, vdir, oldvnode, onewvnode), Error e)
   | Success dir => do
@@ -561,7 +561,7 @@ Definition afs_move_def:
   (case r of
   | Error e => return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error e)
   | Success olddir => do
-  r <- return (Success $ i_dir_update (\d. d ((alphawa oldname) |-> None, (alphawa newname) |-> Some (v_ino oldvnode))) olddir) TODO: Alt return (Error eNameTooLong);
+  r <- return (Success $ i_dir_update (\d. d ((ALPHAwa oldname) |-> None, (ALPHAwa newname) |-> Some (v_ino oldvnode))) olddir) TODO: Alt return (Error eNameTooLong);
   (case r of
   | Error e => return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error e)
   | Success olddir => do
@@ -576,7 +576,7 @@ Definition afs_move_def:
   (case r of
   | Error e => return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error e)
   | Success newdir => do
-  r <- return (Success $ i_dir_update (\d. d ((alphawa newname) |-> Some (v_ino oldvnode))) newdir) TODO: Alt return (Error eNameTooLong);
+  r <- return (Success $ i_dir_update (\d. d ((ALPHAwa newname) |-> Some (v_ino oldvnode))) newdir) TODO: Alt return (Error eNameTooLong);
   (case r of
   | Error e => return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error e)
   | Success newdir => do
@@ -619,7 +619,7 @@ End
 Definition afs_dir_emit_def:
   afs_dir_emit = \(pos, entries) name ino vtype. do
   bool <- select UNIV;
-  (if bool then return (Iterate (pos, entries ((alphawa name) |-> None))) else return (Break (pos, entries ((alphawa name) |-> None))))
+  (if bool then return (Iterate (pos, entries ((ALPHAwa name) |-> None))) else return (Break (pos, entries ((ALPHAwa name) |-> None))))
   od
 End
 
@@ -629,7 +629,7 @@ Definition afs_readdir_def:
   (case r of
   | Error e => return ((afs, rdctx, obrdctx), Error e)
   | Success dir => do
-  toemit <- select {entries. entries \<subseteq> dom (i_dir dir)};
+  toemit <- select {entries. entries SUBSET dom (i_dir dir)};
   obrdctx <- select UNIV;
   pos <- select UNIV;
   return ((afs, (pos, (snd rdctx) |` (-toemit)), obrdctx), Success ())

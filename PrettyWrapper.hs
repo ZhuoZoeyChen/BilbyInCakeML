@@ -9,7 +9,7 @@ import Text.Parsec.Expr (Assoc(..))
 import Text.PrettyPrint.ANSI.Leijen 
 import Prelude hiding ((<$>))
 import Text.Printf (printf)
-import Data.Char (ord)
+import Data.Char (ord, toUpper)
 import Data.Data
 import Data.List
 import Data.Maybe (fromJust)
@@ -56,21 +56,11 @@ unSymbolIdentHOL [] = []
 unSymbolIdentHOL (x : xs) = if x == '\\'
                             then let (txt, rest) =
                                         span (/= '>') $ fromJust $ stripPrefix "<" xs
-                                  in  txt ++ unSymbolIdentHOL (drop 1 rest)
+                                  in  (unSymbolMapping txt) ++ unSymbolIdentHOL (drop 1 rest)
                             else x : unSymbolIdentHOL xs
-  -- where
-  --   unSymbolMapping "alpha" = 
-  --   unSymbolMapping "alpha" = _
-  --   unSymbolMapping "alpha" = _
-  --   unSymbolMapping "alpha" = _
-  --   unSymbolMapping "alpha" = _
-  --   unSymbolMapping "alpha" = _
-  --   unSymbolMapping "alpha" = _
-  --   unSymbolMapping "alpha" = _
-  --   unSymbolMapping "alpha" = _
-  --   unSymbolMapping "alpha" = _
+  where
+    unSymbolMapping       p = map toUpper p --FIXME: zoeyc
 
---"\\<alpha>wa"
 instance Pretty HOLConst where 
     pretty (HOLConst c) = case c of 
         TrueC  -> string "T"
@@ -106,7 +96,7 @@ prettyHOLTerm p (HOLTerm tm) = case tm of
   ListTerm l ts r       -> pretty l <> hcat (intersperse (string ", ") (map (prettyHOLTerm termAppPrecHOL . HOLTerm) ts)) <> pretty r
   ConstTerm const       -> pretty const
   AntiTerm str          -> empty
-  CaseOf e alts         -> parens (string "case" <+> pretty e <+> string "of" <$> sep (map ((text "|" <+> ). (prettyAssisHOL "=>")) alts))
+  CaseOf e alts         -> parens (string "case" <+> pretty (HOLTerm e) <+> string "of" <$> sep (map ((text "|" <+> ). (prettyAssisHOL "=>")) alts))
   RecordUpd upds        -> string "<|" <+> sep (punctuate (text ";") (map (prettyAssisHOL ":=") upds)) <+> string "|>"
   RecordDcl dcls        -> string "<|" <+> sep (punctuate (text ";") (map (prettyAssisHOL ":=") dcls)) <+> string "|>"
   IfThenElse cond c1 c2 -> parens (string "if" <+> prettyHOLTerm p (HOLTerm cond) <+> string "then" <+> 
@@ -160,7 +150,7 @@ termBinOpRecHOL b = case b of
   Shiftr    -> BinOpRec AssocLeft  55  ">>" --F
   TestBit   -> BinOpRec AssocLeft  100 "!!" --F
   Nth       -> BinOpRec AssocLeft  100 "!" --F
-  SubSetEq  -> BinOpRec AssocRight 50  "\\<subseteq>" --F
+  SubSetEq  -> BinOpRec AssocRight 50  "SUBSET" --F
   RestrictMp-> BinOpRec AssocRight 110 "|`" -- FIXME: zoeyc
   Comp      -> BinOpRec AssocRight 55  "o"
   MapsTo    -> BinOpRec AssocRight 100 "->"
@@ -393,9 +383,9 @@ instance Pretty HOLClassRel where
 
 -- FIXME: zoeyc
 instance (Pretty types, Pretty terms) => Pretty (HOLFunFunc types terms) where
-  pretty (HOLFunFunc (FunFunc sigs bd)) = string "Definition" <+>  (encloseSep empty empty (string "and" <> space) (map (pretty . HOLSig) sigs)) -- FIXME: `and' on a new line / zilinc
-                            <+> string "where"
-                            <$$> align (pretty bd)
+  pretty (HOLFunFunc (FunFunc sigs bd)) = string "Definition" <+>  (encloseSep empty empty (string "and" <> space) (map (pretty . HOLSig) sigs))
+                            <+> string "_def:"
+                            <$$> align (pretty (HOLEquations bd))
 
 instance (Pretty types, Pretty terms) => Pretty (HOLEquations types terms) where
   pretty (HOLEquations (Equations terms)) = vsep $ punctuate (space <> string "/\\") $ map (parens. pretty) terms
