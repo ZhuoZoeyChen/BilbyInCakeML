@@ -7,16 +7,16 @@ val _ = patternMatchesLib.ENABLE_PMATCH_CASES();
 val _ = monadsyntax.temp_add_monadsyntax();
 val _ = new_theory"AfsSD"
 
-Type  byte =  U8;
+Type  byte = " U8";
 
 
-Type  page =  U8 list;
+Type  page = " U8 list";
 
 
-Type  dir =  U8 list \<Rightarrow>  Ino option;
+Type  dir = " U8 list ->  Ino option";
 
 
-Type  file_data =  page list;
+Type  file_data = " page list";
 
 
 Datatype:
@@ -28,15 +28,15 @@ End
 
 
 Definition 
-  afs_inode_is_dir x \<equiv> \<exists>v. IDir v = x
+  afs_inode_is_dir x = ?v. IDir v = x
 End
 
 Definition 
-  afs_inode_is_reg x \<equiv> \<exists>v. IReg v = x
+  afs_inode_is_reg x = ?v. IReg v = x
 End
 
 Definition 
-  afs_inode_is_lnk x \<equiv> \<exists>v. ILnk v = x
+  afs_inode_is_lnk x = ?v. ILnk v = x
 End
 
 Datatype:
@@ -55,10 +55,10 @@ afs_inode = <|
 End
 
 
-Type  readdir_ctx =  U32 \<times>  dir;
+Type  readdir_ctx = " U32 #  dir";
 
 
-Type  afs_map =  Ino \<Rightarrow>  afs_inode option;
+Type  afs_map = " Ino ->  afs_inode option";
 
 
 Datatype:
@@ -66,63 +66,63 @@ afs_state = <|
   a_is_readonly : bool;
   a_current_time :  TimeT;
   a_medium_afs :  afs_map;
-  a_medium_updates : ( afs_map \<Rightarrow>  afs_map) list
+  a_medium_updates : ( afs_map ->  afs_map) list
 |>
 End
 
 
-Definition a_afs_updated_n:
+Definition a_afs_updated_n_def:
   a_afs_updated_n n afs_st updates = fold id (take n updates) afs_st
 End
 
 export_rewrites "a_afs_updated_n_def"
 
 
-Definition a_afs_updated:
-  a_afs_updated afs_st updates \<equiv> a_afs_updated_n (length updates) afs_st updates
+Definition a_afs_updated_def:
+  a_afs_updated afs_st updates = a_afs_updated_n (length updates) afs_st updates
 End
 
-Definition updated_afs:
-  updated_afs adata \<equiv> a_afs_updated (a_medium_afs adata) (a_medium_updates adata)
+Definition updated_afs_def:
+  updated_afs adata = a_afs_updated (a_medium_afs adata) (a_medium_updates adata)
 End
 
-Overload i_type_dir =   ``i_type_dir it \<equiv> (case it of
+Overload i_type_dir =   ``i_type_dir it = (case it of
                         | IDir dir => dir)``
 
-Overload i_dir =   ``i_dir i \<equiv> i_type_dir (i_type i)``
+Overload i_dir =   ``i_dir i = i_type_dir (i_type i)``
 
-Definition i_dir_update:
-  i_dir_update m i \<equiv> i <| i_type := IDir (m (i_dir i)) |>
+Definition i_dir_update_def:
+  i_dir_update m i = i <| i_type := IDir (m (i_dir i)) |>
 End
 
 export_rewrites "i_dir_update_def"
 
 
-Overload i_type_data =   ``i_type_data it \<equiv> (case it of
+Overload i_type_data =   ``i_type_data it = (case it of
                          | IReg data => data)``
 
-Overload i_data =   ``i_data i \<equiv> i_type_data (i_type i)``
+Overload i_data =   ``i_data i = i_type_data (i_type i)``
 
-Overload i_data_update =   ``i_data_update m i \<equiv> i <| i_type := IReg (m (i_data i)) |>``
+Overload i_data_update =   ``i_data_update m i = i <| i_type := IReg (m (i_data i)) |>``
 
-Overload i_type_path =   ``i_type_path it \<equiv> (case it of
+Overload i_type_path =   ``i_type_path it = (case it of
                          | ILnk path => path)``
 
-Overload i_path =   ``i_path i \<equiv> i_type_path (i_type i)``
+Overload i_path =   ``i_path i = i_type_path (i_type i)``
 
-Overload i_path_update =   ``i_path_update m i \<equiv> i <| i_type := ILnk (m (i_path i)) |>``
+Overload i_path_update =   ``i_path_update m i = i <| i_type := ILnk (m (i_path i)) |>``
 
-Definition i_size_from_afs_inode_type:
+Definition i_size_from_afs_inode_type_def:
 (i_size_from_afs_inode_type (IDir dir) = undefined)/\
 (i_size_from_afs_inode_type (IReg data) = count (concat data))/\
 (i_size_from_afs_inode_type (ILnk path) = count path)
 End
 
 
-Overload i_size_from_type =   ``i_size_from_type i \<equiv> i_size_from_afs_inode_type $ i_type i``
+Overload i_size_from_type =   ``i_size_from_type i = i_size_from_afs_inode_type $ i_type i``
 
-Definition afs_inode_to_vnode:
-  afs_inode_to_vnode i \<equiv> <| v_ino := i_ino i;
+Definition afs_inode_to_vnode_def:
+  afs_inode_to_vnode i = <| v_ino := i_ino i;
   v_nlink := i_nlink i;
   v_size := i_size i;
   v_mtime := i_mtime i;
@@ -133,8 +133,8 @@ Definition afs_inode_to_vnode:
   v_flags := i_flags i |>
 End
 
-Definition afs_inode_from_vnode:
-  afs_inode_from_vnode v \<equiv> <| i_type := (if v_mode v AND s_IFREG \<noteq> 0 then IReg [] else (if v_mode v AND s_IFDIR \<noteq> 0 then IDir Map.empty else ILnk []));
+Definition afs_inode_from_vnode_def:
+  afs_inode_from_vnode v = <| i_type := (if v_mode v AND s_IFREG <> 0 then IReg [] else (if v_mode v AND s_IFDIR <> 0 then IDir Map.empty else ILnk []));
   i_ino := v_ino v;
   i_nlink := v_nlink v;
   i_size := v_size v;
@@ -146,101 +146,101 @@ Definition afs_inode_from_vnode:
   i_flags := v_flags v |>
 End
 
-Definition error_if_readonly:
-  error_if_readonly as \<equiv> return $ (if a_is_readonly as then Error (eRoFs, as) else Success as)
+Definition error_if_readonly_def:
+  error_if_readonly as = return $ (if a_is_readonly as then Error (eRoFs, as) else Success as)
 End
 
-Definition nondet_error:
-  nondet_error errs f \<equiv> CogentMonad.select errs >>= (return o f)
+Definition nondet_error_def:
+  nondet_error errs f = CogentMonad.select errs >>= (return o f)
 End
 
-Definition afs_alloc_inum:
-  afs_alloc_inum as \<equiv> do
-  avail_inums \<leftarrow> return $ -dom as;
-  opt_inum \<leftarrow> select $ {option.None} \<union> option.Some ` avail_inums;
+Definition afs_alloc_inum_def:
+  afs_alloc_inum as = do
+  avail_inums <- return $ -dom as;
+  opt_inum <- select $ {option.None} UNION option.Some ` avail_inums;
   return $ (if opt_inum = option.None then Error () else Success (the opt_inum))
   od
 End
 
-Definition afs_get_current_time:
-  afs_get_current_time afs \<equiv> do
-  time' \<leftarrow> return (a_current_time afs);
-  time \<leftarrow> select {x. x \<ge> time'};
-  return (afs \<lparr> a_current_time := time \<rparr>, time')
+Definition afs_get_current_time_def:
+  afs_get_current_time afs = do
+  time' <- return (a_current_time afs);
+  time <- select {x. x >= time'};
+  return (afs <| a_current_time := time |>, time')
   od
 End
 
-Definition afs_init_inode:
-  afs_init_inode adata vdir vnode mode \<equiv> do
-  (adata, time) \<leftarrow> afs_get_current_time adata;
-  uid \<leftarrow> return (v_uid vdir);
-  gid \<leftarrow> return (v_gid vdir);
-  vnode \<leftarrow> return (vnode \<lparr> v_ctime := time,
-  v_mtime := time,
-  v_uid := uid,
-  v_gid := gid,
-  v_mode := mode,
-  v_nlink := 1,
-  v_size := 0 \<rparr>);
-  r \<leftarrow> afs_alloc_inum (updated_afs adata);
+Definition afs_init_inode_def:
+  afs_init_inode adata vdir vnode mode = do
+  (adata, time) <- afs_get_current_time adata;
+  uid <- return (v_uid vdir);
+  gid <- return (v_gid vdir);
+  vnode <- return (vnode <| v_ctime := time;
+  v_mtime := time;
+  v_uid := uid;
+  v_gid := gid;
+  v_mode := mode;
+  v_nlink := 1;
+  v_size := 0 |>);
+  r <- afs_alloc_inum (updated_afs adata);
   return (case r of
-  Error () \<Rightarrow> Error (adata, vnode)|
-  Success inum \<Rightarrow> Success (adata, vnode \<lparr> v_ino := inum \<rparr>))
+  | Error () => Error (adata, vnode)
+  | Success inum => Success (adata, vnode <| v_ino := inum |>))
   od
 End
 
-Definition read_afs_inode:
-  read_afs_inode adata ino \<equiv> return (Success $ the $ updated_afs adata ino) \<sqinter> nondet_error {eIO;
+Definition read_afs_inode_def:
+  read_afs_inode adata ino = return (Success $ the $ updated_afs adata ino) TODO: Alt nondet_error {eIO;
   eNoMem;
   eInval;
   eBadF} Error
 End
 
-Definition afs_apply_updates_nondet:
-  afs_apply_updates_nondet afs \<equiv> do
-  (to_apply, updates) \<leftarrow> {(ap, up). ap @ up = a_medium_updates afs};
-  return (afs \<lparr> a_medium_afs := fold id to_apply (a_medium_afs afs),
-  a_medium_updates := updates \<rparr>)
+Definition afs_apply_updates_nondet_def:
+  afs_apply_updates_nondet afs = do
+  (to_apply, updates) <- {(ap, up). ap @ up = a_medium_updates afs};
+  return (afs <| a_medium_afs := fold id to_apply (a_medium_afs afs);
+  a_medium_updates := updates |>)
   od
 End
 
-Definition afs_update:
-  afs_update afs upd \<equiv> do
-  afs \<leftarrow> afs_apply_updates_nondet (afs \<lparr> a_medium_updates := a_medium_updates afs @ [upd] \<rparr>);
-  (if a_medium_updates afs = [] then return (afs, Success ()) else return (afs, Success ()) \<sqinter> nondet_error {eIO,
-  eNoSpc,
-  eNoMem} (\<lambda>e. (afs \<lparr> a_medium_updates := butlast (a_medium_updates afs) \<rparr>, Error e)))
+Definition afs_update_def:
+  afs_update afs upd = do
+  afs <- afs_apply_updates_nondet (afs <| a_medium_updates := a_medium_updates afs @ [upd] |>);
+  (if a_medium_updates afs = [] then return (afs, Success ()) else return (afs, Success ()) TODO: Alt nondet_error {eIO;
+  eNoSpc;
+  eNoMem} (\e. (afs <| a_medium_updates := butlast (a_medium_updates afs) |>, Error e)))
   od
 End
 
-Definition afs_create:
-  afs_create afs parentdir name mode vnode \<equiv> (if a_is_readonly afs then return ((afs, parentdir, vnode), Error eRoFs) else do
-  r \<leftarrow> afs_init_inode afs parentdir vnode (mode OR s_IFREG);
+Definition afs_create_def:
+  afs_create afs parentdir name mode vnode = (if a_is_readonly afs then return ((afs, parentdir, vnode), Error eRoFs) else do
+  r <- afs_init_inode afs parentdir vnode (mode OR s_IFREG);
   (case r of
-  Error (afs, vnode) \<Rightarrow> return ((afs, parentdir, vnode), Error eNFile)|
-  Success (afs, vnode) \<Rightarrow> do
-  r \<leftarrow> read_afs_inode afs (v_ino parentdir);
+  | Error (afs, vnode) => return ((afs, parentdir, vnode), Error eNFile)
+  | Success (afs, vnode) => do
+  r <- read_afs_inode afs (v_ino parentdir);
   (case r of
-  Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success dir \<Rightarrow> do
-  r \<leftarrow> return (Success $ i_dir_update (\<lambda>d. d ((\<alpha>wa name) \<mapsto> v_ino vnode)) dir) \<sqinter> return (Error eNameTooLong);
+  | Error e => return ((afs, parentdir, vnode), Error e)
+  | Success dir => do
+  r <- return (Success $ i_dir_update (\d. d ((alphaalphawa name) -> v_ino vnode)) dir) TODO: Alt return (Error eNameTooLong);
   (case r of
-  Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success dir \<Rightarrow> do
-  r \<leftarrow> select (Success ` {sz. sz > v_size parentdir}) \<sqinter> return (Error eOverflow);
+  | Error e => return ((afs, parentdir, vnode), Error e)
+  | Success dir => do
+  r <- select (Success ` {sz. sz > v_size parentdir}) TODO: Alt return (Error eOverflow);
   (case r of
-  Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success newsz \<Rightarrow> do
-  time \<leftarrow> return (v_ctime vnode);
-  dir \<leftarrow> return (dir \<lparr> i_ctime := time,
-  i_mtime := time \<rparr>);
-  inode \<leftarrow> return (afs_inode_from_vnode vnode);
-  (afs, r) \<leftarrow> afs_update afs (\<lambda>f. f ((i_ino inode) \<mapsto> inode, (i_ino dir) \<mapsto> dir));
+  | Error e => return ((afs, parentdir, vnode), Error e)
+  | Success newsz => do
+  time <- return (v_ctime vnode);
+  dir <- return (dir <| i_ctime := time;
+  i_mtime := time |>);
+  inode <- return (afs_inode_from_vnode vnode);
+  (afs, r) <- afs_update afs (\f. f ((i_ino inode) -> inode, (i_ino dir) -> dir));
   (case r of
-  Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success () \<Rightarrow> return ((afs, parentdir \<lparr> v_ctime := time,
-  v_mtime := time,
-  v_size := newsz \<rparr>, vnode), Success ()))
+  | Error e => return ((afs, parentdir, vnode), Error e)
+  | Success () => return ((afs, parentdir <| v_ctime := time;
+  v_mtime := time;
+  v_size := newsz |>, vnode), Success ()))
   od)
   od)
   od)
@@ -248,192 +248,196 @@ Definition afs_create:
   od)
 End
 
-Definition afs_sync:
-  afs_sync afs \<equiv> (if a_is_readonly afs then return (afs, Error eRoFs) else do
-  n \<leftarrow> select {0..length (a_medium_updates afs)};
+Definition afs_sync_def:
+  afs_sync afs = (if a_is_readonly afs then return (afs, Error eRoFs) else do
+  n <- select {0..length (a_medium_updates afs)};
   let updates = a_medium_updates afs;
   (to_apply, updates) = (take n updates, drop n updates);
-  afs = a_medium_afs_update (fold (\<lambda>upd med. upd med) to_apply) afs;
-  afs = a_medium_updates_update (\<lambda>_. updates) afs in (if updates = [] then return (afs, Success ()) else do
-  e \<leftarrow> select {eIO,
-  eNoMem,
-  eNoSpc,
+  afs = a_medium_afs_update (fold (\upd med. upd med) to_apply) afs;
+  afs = a_medium_updates_update (\_. updates) afs
+  in
+  (if updates = [] then return (afs, Success ()) else do
+  e <- select {eIO;
+  eNoMem;
+  eNoSpc;
   eOverflow};
-  return (afs \<lparr> a_is_readonly := e = eIO \<rparr>, Error e)
+  return (afs <| a_is_readonly := e = eIO |>, Error e)
   od)
   od)
 End
 
-Definition afs_unlink:
-  afs_unlink afs parentdir name vnode \<equiv> do
-  r \<leftarrow> error_if_readonly afs;
+Definition afs_unlink_def:
+  afs_unlink afs parentdir name vnode = do
+  r <- error_if_readonly afs;
   (case r of
-  Error (e, afs) \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success afs \<Rightarrow> do
-  (afs, time) \<leftarrow> afs_get_current_time afs;
-  inode \<leftarrow> return ((the $ updated_afs afs (v_ino vnode)) \<lparr> i_nlink := v_nlink vnode - 1,
-  i_ctime := time \<rparr>);
-  newsize \<leftarrow> select {sz. sz < v_size parentdir};
-  dir_ino \<leftarrow> return (v_ino parentdir);
-  (afs, r) \<leftarrow> afs_update afs (\<lambda>f. f (dir_ino \<mapsto> i_dir_update (\<lambda>d. d ((\<alpha>wa name) := option.None)) (the $ f dir_ino) \<lparr> i_ctime := time,
-  i_mtime := time \<rparr>, (v_ino vnode) \<mapsto> inode));
+  | Error (e, afs) => return ((afs, parentdir, vnode), Error e)
+  | Success afs => do
+  (afs, time) <- afs_get_current_time afs;
+  inode <- return ((the $ updated_afs afs (v_ino vnode)) <| i_nlink := v_nlink vnode - 1;
+  i_ctime := time |>);
+  newsize <- select {sz. sz < v_size parentdir};
+  dir_ino <- return (v_ino parentdir);
+  (afs, r) <- afs_update afs (\f. f (dir_ino -> i_dir_update (\d. d ((alphawa name) |-> option.None)) (the $ f dir_ino) <| i_ctime := time;
+  i_mtime := time |>, (v_ino vnode) -> inode));
   (case r of
-  Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success () \<Rightarrow> let vnode' = vnode \<lparr> v_nlink := v_nlink vnode - 1,
-  v_ctime := time \<rparr>;
-  parentdir' = parentdir \<lparr> v_ctime := time,
-  v_mtime := time,
-  v_size := newsize \<rparr> in return ((afs, parentdir', vnode'), Success ()))
+  | Error e => return ((afs, parentdir, vnode), Error e)
+  | Success () => let vnode' = vnode <| v_nlink := v_nlink vnode - 1;
+  v_ctime := time |>;
+  parentdir' = parentdir <| v_ctime := time;
+  v_mtime := time;
+  v_size := newsize |>
+  in
+  return ((afs, parentdir', vnode'), Success ()))
   od)
   od
 End
 
-Definition afs_iget:
-  afs_iget afs inum vnode \<equiv> (if inum \<in> dom (updated_afs afs) then do
-  r \<leftarrow> read_afs_inode afs inum;
+Definition afs_iget_def:
+  afs_iget afs inum vnode = (if inum IN dom (updated_afs afs) then do
+  r <- read_afs_inode afs inum;
   (case r of
-  Success inode \<Rightarrow> return (afs_inode_to_vnode inode, Success ())|
-  Error e \<Rightarrow> return (vnode, Error e))
+  | Success inode => return (afs_inode_to_vnode inode, Success ())
+  | Error e => return (vnode, Error e))
   od else return (vnode, Error eNoEnt))
 End
 
-Definition afs_lookup:
-  afs_lookup afs vdir name \<equiv> (if wordarray_length name > bilbyFsMaxNameLen + 1 then return (Error eNameTooLong) else do
-  r \<leftarrow> read_afs_inode afs (v_ino vdir);
+Definition afs_lookup_def:
+  afs_lookup afs vdir name = (if wordarray_length name > bilbyFsMaxNameLen + 1 then return (Error eNameTooLong) else do
+  r <- read_afs_inode afs (v_ino vdir);
   (case r of
-  Error e \<Rightarrow> return (Error e)|
-  Success dir \<Rightarrow> (case i_dir dir (\<alpha>wa name) of
-  None \<Rightarrow> return (Error eNoEnt)|
-  Some ino \<Rightarrow> return (Success ino)))
+  | Error e => return (Error e)
+  | Success dir => (case i_dir dir (\<alpha>wa name) of
+  | None => return (Error eNoEnt)
+  | Some ino => return (Success ino)))
   od)
 End
 
-Definition afs_link:
-  afs_link afs parentdir name vnode \<equiv> (if a_is_readonly afs then return ((afs, parentdir, vnode), Error eRoFs) else do
-  r \<leftarrow> read_afs_inode afs (v_ino parentdir);
+Definition afs_link_def:
+  afs_link afs parentdir name vnode = (if a_is_readonly afs then return ((afs, parentdir, vnode), Error eRoFs) else do
+  r <- read_afs_inode afs (v_ino parentdir);
   (case r of
-  Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success dir \<Rightarrow> do
-  r \<leftarrow> return (Success $ i_dir_update (\<lambda>d. d ((\<alpha>wa name) \<mapsto> v_ino vnode)) dir) \<sqinter> return (Error eNameTooLong);
+  | Error e => return ((afs, parentdir, vnode), Error e)
+  | Success dir => do
+  r <- return (Success $ i_dir_update (\d. d ((alphawa name) -> v_ino vnode)) dir) TODO: Alt return (Error eNameTooLong);
   (case r of
-  Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success dir \<Rightarrow> do
-  r \<leftarrow> select (Success ` {sz. sz > v_size parentdir}) \<sqinter> return (Error eOverflow);
+  | Error e => return ((afs, parentdir, vnode), Error e)
+  | Success dir => do
+  r <- select (Success ` {sz. sz > v_size parentdir}) TODO: Alt return (Error eOverflow);
   (case r of
-  Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success newsz \<Rightarrow> do
-  time \<leftarrow> return (v_ctime vnode);
-  dir \<leftarrow> return (dir \<lparr> i_ctime := time,
-  i_mtime := time,
-  i_size := newsz \<rparr>);
-  inode \<leftarrow> return (the $ updated_afs afs (v_ino vnode));
-  (afs, r) \<leftarrow> afs_update afs (\<lambda>f. f ((i_ino inode) \<mapsto> inode, (i_ino dir) \<mapsto> dir));
+  | Error e => return ((afs, parentdir, vnode), Error e)
+  | Success newsz => do
+  time <- return (v_ctime vnode);
+  dir <- return (dir <| i_ctime := time;
+  i_mtime := time;
+  i_size := newsz |>);
+  inode <- return (the $ updated_afs afs (v_ino vnode));
+  (afs, r) <- afs_update afs (\f. f ((i_ino inode) -> inode, (i_ino dir) -> dir));
   (case r of
-  Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success () \<Rightarrow> return ((afs, parentdir \<lparr> v_ctime := time,
-  v_mtime := time,
-  v_size := newsz \<rparr>, vnode \<lparr> v_nlink := v_nlink vnode + 1 \<rparr>), Success ()))
-  od)
-  od)
-  od)
-  od)
-End
-
-Definition afs_mkdir:
-  afs_mkdir afs parentdir name mode vnode \<equiv> (if a_is_readonly afs then return ((afs, parentdir, vnode), Error eRoFs) else do
-  r \<leftarrow> afs_init_inode afs parentdir vnode (mode OR s_IFDIR);
-  (case r of
-  Error (afs, vnode) \<Rightarrow> return ((afs, parentdir, vnode), Error eNFile)|
-  Success (afs, vnode) \<Rightarrow> do
-  r \<leftarrow> read_afs_inode afs (v_ino parentdir);
-  (case r of
-  Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success dir \<Rightarrow> do
-  r \<leftarrow> return (Success $ i_dir_update (\<lambda>d. d ((\<alpha>wa name) \<mapsto> v_ino vnode)) dir) \<sqinter> return (Error eNameTooLong);
-  (case r of
-  Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success dir \<Rightarrow> do
-  r \<leftarrow> select (Success ` {sz. sz > v_size parentdir}) \<sqinter> return (Error eOverflow);
-  (case r of
-  Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success newsz \<Rightarrow> do
-  time \<leftarrow> return (v_ctime vnode);
-  dir \<leftarrow> return (dir \<lparr> i_ctime := time,
-  i_mtime := time,
-  i_nlink := i_nlink dir + 1,
-  i_size := newsz \<rparr>);
-  vnode \<leftarrow> return (vnode \<lparr> v_nlink := 2 \<rparr>);
-  inode \<leftarrow> return (afs_inode_from_vnode vnode);
-  (afs, r) \<leftarrow> afs_update afs (\<lambda>f. f ((i_ino inode) \<mapsto> inode, (i_ino dir) \<mapsto> dir));
-  (case r of
-  Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success () \<Rightarrow> return ((afs, parentdir \<lparr> v_nlink := v_nlink parentdir + 1,
-  v_ctime := time,
-  v_mtime := time,
-  v_size := newsz \<rparr>, vnode), Success ()))
-  od)
+  | Error e => return ((afs, parentdir, vnode), Error e)
+  | Success () => return ((afs, parentdir <| v_ctime := time;
+  v_mtime := time;
+  v_size := newsz |>, vnode <| v_nlink := v_nlink vnode + 1 |>), Success ()))
   od)
   od)
   od)
   od)
 End
 
-Definition afs_rmdir:
-  afs_rmdir afs parentdir name vnode \<equiv> do
-  r \<leftarrow> error_if_readonly afs;
+Definition afs_mkdir_def:
+  afs_mkdir afs parentdir name mode vnode = (if a_is_readonly afs then return ((afs, parentdir, vnode), Error eRoFs) else do
+  r <- afs_init_inode afs parentdir vnode (mode OR s_IFDIR);
   (case r of
-  Error (e, afs) \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success afs \<Rightarrow> (if dom (i_dir (the $ updated_afs afs (v_ino vnode))) \<noteq> {} then return ((afs, parentdir, vnode), Error eNotEmpty) else do
-  (afs, time) \<leftarrow> afs_get_current_time afs;
-  vnode' \<leftarrow> return (vnode \<lparr> v_nlink := 0 \<rparr>);
-  inode \<leftarrow> return (afs_inode_from_vnode vnode);
-  newsize \<leftarrow> select {sz. sz < v_size parentdir};
-  dir_ino \<leftarrow> return (v_ino parentdir);
-  parentdir' \<leftarrow> return (parentdir \<lparr> v_nlink := v_nlink parentdir - 1,
-  v_ctime := time,
-  v_mtime := time,
-  v_size := newsize \<rparr>);
-  (afs, r) \<leftarrow> afs_update afs (\<lambda>f. f (dir_ino \<mapsto> i_dir_update (\<lambda>d. d ((\<alpha>wa name) := option.None)) (the $ f dir_ino) \<lparr> i_ctime := time,
-  i_mtime := time,
-  i_nlink := v_nlink parentdir' \<rparr>, (v_ino vnode) \<mapsto> inode));
+  | Error (afs, vnode) => return ((afs, parentdir, vnode), Error eNFile)
+  | Success (afs, vnode) => do
+  r <- read_afs_inode afs (v_ino parentdir);
   (case r of
-  Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success () \<Rightarrow> return ((afs, parentdir', vnode'), Success ()))
+  | Error e => return ((afs, parentdir, vnode), Error e)
+  | Success dir => do
+  r <- return (Success $ i_dir_update (\d. d ((alphawa name) -> v_ino vnode)) dir) TODO: Alt return (Error eNameTooLong);
+  (case r of
+  | Error e => return ((afs, parentdir, vnode), Error e)
+  | Success dir => do
+  r <- select (Success ` {sz. sz > v_size parentdir}) TODO: Alt return (Error eOverflow);
+  (case r of
+  | Error e => return ((afs, parentdir, vnode), Error e)
+  | Success newsz => do
+  time <- return (v_ctime vnode);
+  dir <- return (dir <| i_ctime := time;
+  i_mtime := time;
+  i_nlink := i_nlink dir + 1;
+  i_size := newsz |>);
+  vnode <- return (vnode <| v_nlink := 2 |>);
+  inode <- return (afs_inode_from_vnode vnode);
+  (afs, r) <- afs_update afs (\f. f ((i_ino inode) -> inode, (i_ino dir) -> dir));
+  (case r of
+  | Error e => return ((afs, parentdir, vnode), Error e)
+  | Success () => return ((afs, parentdir <| v_nlink := v_nlink parentdir + 1;
+  v_ctime := time;
+  v_mtime := time;
+  v_size := newsz |>, vnode), Success ()))
+  od)
+  od)
+  od)
+  od)
+  od)
+End
+
+Definition afs_rmdir_def:
+  afs_rmdir afs parentdir name vnode = do
+  r <- error_if_readonly afs;
+  (case r of
+  | Error (e, afs) => return ((afs, parentdir, vnode), Error e)
+  | Success afs => (if dom (i_dir (the $ updated_afs afs (v_ino vnode))) <> {} then return ((afs, parentdir, vnode), Error eNotEmpty) else do
+  (afs, time) <- afs_get_current_time afs;
+  vnode' <- return (vnode <| v_nlink := 0 |>);
+  inode <- return (afs_inode_from_vnode vnode);
+  newsize <- select {sz. sz < v_size parentdir};
+  dir_ino <- return (v_ino parentdir);
+  parentdir' <- return (parentdir <| v_nlink := v_nlink parentdir - 1;
+  v_ctime := time;
+  v_mtime := time;
+  v_size := newsize |>);
+  (afs, r) <- afs_update afs (\f. f (dir_ino -> i_dir_update (\d. d ((alphawa name) |-> option.None)) (the $ f dir_ino) <| i_ctime := time;
+  i_mtime := time;
+  i_nlink := v_nlink parentdir' |>, (v_ino vnode) -> inode));
+  (case r of
+  | Error e => return ((afs, parentdir, vnode), Error e)
+  | Success () => return ((afs, parentdir', vnode'), Success ()))
   od))
   od
 End
 
-Definition afs_symlink:
-  afs_symlink afs parentdir name symname mode vnode \<equiv> (if a_is_readonly afs then return ((afs, parentdir, vnode), Error eRoFs) else (if wordarray_length symname > bilbyFsBlockSize then return ((afs, parentdir, vnode), Error eNameTooLong) else do
-  r \<leftarrow> afs_init_inode afs parentdir vnode (mode OR s_IFLNK OR s_IRWXUGO);
+Definition afs_symlink_def:
+  afs_symlink afs parentdir name symname mode vnode = (if a_is_readonly afs then return ((afs, parentdir, vnode), Error eRoFs) else (if wordarray_length symname > bilbyFsBlockSize then return ((afs, parentdir, vnode), Error eNameTooLong) else do
+  r <- afs_init_inode afs parentdir vnode (mode OR s_IFLNK OR s_IRWXUGO);
   (case r of
-  Error (afs, vnode) \<Rightarrow> return ((afs, parentdir, vnode), Error eNFile)|
-  Success (afs, vnode) \<Rightarrow> do
-  r \<leftarrow> read_afs_inode afs (v_ino parentdir);
+  | Error (afs, vnode) => return ((afs, parentdir, vnode), Error eNFile)
+  | Success (afs, vnode) => do
+  r <- read_afs_inode afs (v_ino parentdir);
   (case r of
-  Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success dir \<Rightarrow> do
-  r \<leftarrow> return (Success $ i_dir_update (\<lambda>d. d ((\<alpha>wa name) \<mapsto> v_ino vnode)) dir) \<sqinter> return (Error eNameTooLong);
+  | Error e => return ((afs, parentdir, vnode), Error e)
+  | Success dir => do
+  r <- return (Success $ i_dir_update (\d. d ((alphawa name) -> v_ino vnode)) dir) TODO: Alt return (Error eNameTooLong);
   (case r of
-  Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success dir \<Rightarrow> do
-  r \<leftarrow> select (Success ` {sz. sz > v_size parentdir}) \<sqinter> return (Error eOverflow);
+  | Error e => return ((afs, parentdir, vnode), Error e)
+  | Success dir => do
+  r <- select (Success ` {sz. sz > v_size parentdir}) TODO: Alt return (Error eOverflow);
   (case r of
-  Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success newsz \<Rightarrow> do
-  time \<leftarrow> return (v_ctime vnode);
-  vnode \<leftarrow> return (vnode \<lparr> v_size := ucast $ wordarray_length symname \<rparr>);
-  dir \<leftarrow> return (dir \<lparr> i_ctime := time,
-  i_mtime := time,
-  i_size := v_size vnode \<rparr>);
-  inode \<leftarrow> return (afs_inode_from_vnode vnode);
-  inode \<leftarrow> return (i_path_update (\<lambda>_. \<alpha>wa symname) inode);
-  (afs, r) \<leftarrow> afs_update afs (\<lambda>f. f ((i_ino inode) \<mapsto> inode, (i_ino dir) \<mapsto> dir));
+  | Error e => return ((afs, parentdir, vnode), Error e)
+  | Success newsz => do
+  time <- return (v_ctime vnode);
+  vnode <- return (vnode <| v_size := ucast $ wordarray_length symname |>);
+  dir <- return (dir <| i_ctime := time;
+  i_mtime := time;
+  i_size := v_size vnode |>);
+  inode <- return (afs_inode_from_vnode vnode);
+  inode <- return (i_path_update (\_. alphawa symname) inode);
+  (afs, r) <- afs_update afs (\f. f ((i_ino inode) -> inode, (i_ino dir) -> dir));
   (case r of
-  Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)|
-  Success () \<Rightarrow> return ((afs, parentdir \<lparr> v_ctime := time,
-  v_mtime := time,
-  v_size := newsz \<rparr>, vnode), Success ()))
+  | Error e => return ((afs, parentdir, vnode), Error e)
+  | Success () => return ((afs, parentdir <| v_ctime := time;
+  v_mtime := time;
+  v_size := newsz |>, vnode), Success ()))
   od)
   od)
   od)
@@ -441,159 +445,169 @@ Definition afs_symlink:
   od))
 End
 
-Definition pad_block:
-  pad_block data len \<equiv> data @ drop (length data) (replicate (unat len) 0)
+Definition pad_block_def:
+  pad_block data len = data @ drop (length data) (replicate (unat len) 0)
 End
 
-Definition afs_readpage:
-  afs_readpage afs vnode block buf \<equiv> (if block > v_size vnode >> unat bilbyFsBlockShift then return ((afs, vnode, WordArrayT.make (replicate (unat bilbyFsBlockSize) 0)), Error eNoEnt) else (if block = v_size vnode >> unat bilbyFsBlockShift \<and> v_size vnode mod (ucast bilbyFsBlockSize) = 0 then return ((afs, vnode, buf), Success ()) else do
-  err \<leftarrow> {eIO,
-  eNoMem,
-  eInval,
-  eBadF,
+Definition afs_readpage_def:
+  afs_readpage afs vnode block buf = (if block > v_size vnode >> unat bilbyFsBlockShift then return ((afs, vnode, WordArrayT.make (replicate (unat bilbyFsBlockSize) 0)), Error eNoEnt) else (if block = v_size vnode >> unat bilbyFsBlockShift /\ v_size vnode mod (ucast bilbyFsBlockSize) = 0 then return ((afs, vnode, buf), Success ()) else do
+  err <- {eIO;
+  eNoMem;
+  eInval;
+  eBadF;
   eNoEnt};
-  return ((afs, vnode, WordArrayT.make (pad_block (i_data (the $ updated_afs afs (v_ino vnode)) ! (unat block)) bilbyFsBlockSize)), Success ()) \<sqinter> return ((afs, vnode, buf), Error err)
+  return ((afs, vnode, WordArrayT.make (pad_block (i_data (the $ updated_afs afs (v_ino vnode)) ! (unat block)) bilbyFsBlockSize)), Success ()) TODO: Alt return ((afs, vnode, buf), Error err)
   od))
 End
 
-Definition afs_write_begin:
-  afs_write_begin afs vnode pos len buf \<equiv> (if a_is_readonly afs then return ((afs, vnode, buf), Error eRoFs) else do
-  ((afs, vnode, buf'), r) \<leftarrow> afs_readpage afs vnode (pos >> unat bilbyFsBlockShift) buf;
+Definition afs_write_begin_def:
+  afs_write_begin afs vnode pos len buf = (if a_is_readonly afs then return ((afs, vnode, buf), Error eRoFs) else do
+  ((afs, vnode, buf'), r) <- afs_readpage afs vnode (pos >> unat bilbyFsBlockShift) buf;
   (case r of
-  Error e \<Rightarrow> return ((afs, vnode, buf'), (if (e = eNoEnt) then Success () else Error e))|
-  Success () \<Rightarrow> return ((afs, vnode, buf'), Success ()))
+  | Error e => return ((afs, vnode, buf'), (if (e = eNoEnt) then Success () else Error e))
+  | Success () => return ((afs, vnode, buf'), Success ()))
   od)
 End
 
-Definition afs_write_end:
-  afs_write_end afs vnode pos len addr \<equiv> (if a_is_readonly afs then return ((afs, vnode), Error eRoFs) else do
-  newsize \<leftarrow> return (max (v_size vnode) (pos + ucast len));
-  (afs, time) \<leftarrow> afs_get_current_time afs;
-  vnode' \<leftarrow> return (vnode \<lparr> v_size := newsize,
-  v_mtime := time \<rparr>);
-  block \<leftarrow> return (unat $ pos >> unat bilbyFsBlockShift);
-  (afs, r) \<leftarrow> afs_update afs (\<lambda>f. f ((v_ino vnode) \<mapsto> i_data_update (\<lambda>data. data [block := \<alpha>wa addr]) (the $ f (v_ino vnode)) \<lparr> i_size := newsize \<rparr>));
+Definition afs_write_end_def:
+  afs_write_end afs vnode pos len addr = (if a_is_readonly afs then return ((afs, vnode), Error eRoFs) else do
+  newsize <- return (max (v_size vnode) (pos + ucast len));
+  (afs, time) <- afs_get_current_time afs;
+  vnode' <- return (vnode <| v_size := newsize;
+  v_mtime := time |>);
+  block <- return (unat $ pos >> unat bilbyFsBlockShift);
+  (afs, r) <- afs_update afs (\f. f ((v_ino vnode) -> i_data_update (\data. data [block |-> alphawa addr]) (the $ f (v_ino vnode)) <| i_size := newsize |>));
   (case r of
-  Error e \<Rightarrow> return ((afs, vnode), Error e)|
-  Success () \<Rightarrow> return ((afs, vnode'), Success ()))
+  | Error e => return ((afs, vnode), Error e)
+  | Success () => return ((afs, vnode'), Success ()))
   od)
 End
 
-Definition afs_evict_inode:
-  afs_evict_inode afs vnode \<equiv> (if a_is_readonly afs then return (afs, Error eRoFs) else (if v_nlink vnode \<noteq> 0 then return (afs, Success ()) else afs_update afs (\<lambda>f. f ((v_ino vnode) := None))))
+Definition afs_evict_inode_def:
+  afs_evict_inode afs vnode = (if a_is_readonly afs then return (afs, Error eRoFs) else (if v_nlink vnode <> 0 then return (afs, Success ()) else afs_update afs (\f. f ((v_ino vnode) |-> None))))
 End
 
-Definition afs_follow_link:
-  afs_follow_link afs vnode path \<equiv> do
-  r \<leftarrow> read_afs_inode afs (v_ino vnode);
+Definition afs_follow_link_def:
+  afs_follow_link afs vnode path = do
+  r <- read_afs_inode afs (v_ino vnode);
   (case r of
-  Error e \<Rightarrow> return ((afs, vnode, path), Error e)|
-  Success inode \<Rightarrow> let wa_path = WordArrayT.make (i_path inode);
-  updated_path = wordarray_copy (path, wa_path, 0, 0, ucast (i_size inode)) in return ((afs, vnode, updated_path), Success ()))
+  | Error e => return ((afs, vnode, path), Error e)
+  | Success inode => let wa_path = WordArrayT.make (i_path inode);
+  updated_path = wordarray_copy (path, wa_path, 0, 0, ucast (i_size inode))
+  in
+  return ((afs, vnode, updated_path), Success ()))
   od
 End
 
-Definition afs_rename:
-  afs_rename afs vdir oldname oldvnode newname onewvnode \<equiv> (if a_is_readonly afs then return ((afs, vdir, oldvnode, onewvnode), Error eRoFs) else do
-  old_is_dir \<leftarrow> return (S_ISDIR (v_mode oldvnode));
-  ncnt \<leftarrow> return (if old_is_dir then (v_nlink oldvnode - 1) else (v_nlink oldvnode));
-  oldvnode' \<leftarrow> return (oldvnode \<lparr> v_nlink := ncnt \<rparr>);
-  oldinode \<leftarrow> return ((the $ updated_afs afs (v_ino oldvnode)) \<lparr> i_nlink := ncnt \<rparr>);
-  (afs, time) \<leftarrow> afs_get_current_time afs;
-  newsz \<leftarrow> select UNIV;
-  r \<leftarrow> read_afs_inode afs (v_ino vdir);
+Definition afs_rename_def:
+  afs_rename afs vdir oldname oldvnode newname onewvnode = (if a_is_readonly afs then return ((afs, vdir, oldvnode, onewvnode), Error eRoFs) else do
+  old_is_dir <- return (S_ISDIR (v_mode oldvnode));
+  ncnt <- return (if old_is_dir then (v_nlink oldvnode - 1) else (v_nlink oldvnode));
+  oldvnode' <- return (oldvnode <| v_nlink := ncnt |>);
+  oldinode <- return ((the $ updated_afs afs (v_ino oldvnode)) <| i_nlink := ncnt |>);
+  (afs, time) <- afs_get_current_time afs;
+  newsz <- select UNIV;
+  r <- read_afs_inode afs (v_ino vdir);
   (case r of
-  Error e \<Rightarrow> return ((afs, vdir, oldvnode, onewvnode), Error e)|
-  Success dir \<Rightarrow> do
-  r \<leftarrow> return (Success $ i_dir_update (\<lambda>d. d ((\<alpha>wa oldname) := None, (\<alpha>wa newname) := Some (v_ino oldvnode))) dir) \<sqinter> return (Error eNameTooLong);
+  | Error e => return ((afs, vdir, oldvnode, onewvnode), Error e)
+  | Success dir => do
+  r <- return (Success $ i_dir_update (\d. d ((alphawa oldname) |-> None, (alphawa newname) |-> Some (v_ino oldvnode))) dir) TODO: Alt return (Error eNameTooLong);
   (case r of
-  Error e \<Rightarrow> return ((afs, vdir, oldvnode, onewvnode), Error e)|
-  Success dir \<Rightarrow> do
-  dir \<leftarrow> return (dir \<lparr> i_ctime := time,
-  i_mtime := time,
-  i_size := newsz \<rparr>);
+  | Error e => return ((afs, vdir, oldvnode, onewvnode), Error e)
+  | Success dir => do
+  dir <- return (dir <| i_ctime := time;
+  i_mtime := time;
+  i_size := newsz |>);
   (case onewvnode of
-  Some newvnode \<Rightarrow> let newinode = the $ updated_afs afs (v_ino newvnode);
-  new_is_dir = afs_inode_is_dir (i_type newinode) in (if new_is_dir \<and> dom (i_dir newinode) \<noteq> {} then return ((afs, vdir, oldvnode, onewvnode), Error eNotEmpty) else do
-  ncnt \<leftarrow> return (if new_is_dir then 0 else (v_nlink newvnode - 1));
-  newvnode' \<leftarrow> return (newvnode \<lparr> v_nlink := ncnt \<rparr>);
-  newinode \<leftarrow> return (newinode \<lparr> i_nlink := ncnt \<rparr>);
-  (afs, r) \<leftarrow> afs_update afs (\<lambda>f. f ((i_ino oldinode) \<mapsto> oldinode, (i_ino dir) \<mapsto> dir, (i_ino newinode) \<mapsto> newinode));
+  | Some newvnode => let newinode = the $ updated_afs afs (v_ino newvnode);
+  new_is_dir = afs_inode_is_dir (i_type newinode)
+  in
+  (if new_is_dir /\ dom (i_dir newinode) <> {} then return ((afs, vdir, oldvnode, onewvnode), Error eNotEmpty) else do
+  ncnt <- return (if new_is_dir then 0 else (v_nlink newvnode - 1));
+  newvnode' <- return (newvnode <| v_nlink := ncnt |>);
+  newinode <- return (newinode <| i_nlink := ncnt |>);
+  (afs, r) <- afs_update afs (\f. f ((i_ino oldinode) -> oldinode, (i_ino dir) -> dir, (i_ino newinode) -> newinode));
   (case r of
-  Error e \<Rightarrow> return ((afs, vdir, oldvnode, onewvnode), Error e)|
-  Success () \<Rightarrow> let vdir' = vdir \<lparr> v_mtime := time,
-  v_ctime := time,
-  v_size := newsz \<rparr> in return ((afs, vdir', oldvnode', Some newvnode'), Success ()))
-  od)|
-  None \<Rightarrow> do
-  (afs, r) \<leftarrow> afs_update afs (\<lambda>f. f ((i_ino oldinode) \<mapsto> oldinode, (i_ino dir) \<mapsto> dir));
+  | Error e => return ((afs, vdir, oldvnode, onewvnode), Error e)
+  | Success () => let vdir' = vdir <| v_mtime := time;
+  v_ctime := time;
+  v_size := newsz |>
+  in
+  return ((afs, vdir', oldvnode', Some newvnode'), Success ()))
+  od)
+  | None => do
+  (afs, r) <- afs_update afs (\f. f ((i_ino oldinode) -> oldinode, (i_ino dir) -> dir));
   (case r of
-  Error e \<Rightarrow> return ((afs, vdir, oldvnode, onewvnode), Error e)|
-  Success () \<Rightarrow> let vdir' = vdir \<lparr> v_mtime := time,
-  v_ctime := time,
-  v_size := newsz \<rparr> in return ((afs, vdir', oldvnode', None), Success ()))
+  | Error e => return ((afs, vdir, oldvnode, onewvnode), Error e)
+  | Success () => let vdir' = vdir <| v_mtime := time;
+  v_ctime := time;
+  v_size := newsz |>
+  in
+  return ((afs, vdir', oldvnode', None), Success ()))
   od)
   od)
   od)
   od)
 End
 
-Definition afs_move:
-  afs_move afs oldvdir oldname oldvnode newvdir newname onewvnode \<equiv> (if a_is_readonly afs then return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error eRoFs) else do
-  old_is_dir \<leftarrow> return (S_ISDIR (v_mode oldvnode));
-  ncnt \<leftarrow> return (if old_is_dir then (v_nlink oldvnode - 1) else (v_nlink oldvnode));
-  oldvnode' \<leftarrow> return (oldvnode \<lparr> v_nlink := ncnt \<rparr>);
-  oldinode \<leftarrow> return ((the $ updated_afs afs (v_ino oldvnode)) \<lparr> i_nlink := ncnt \<rparr>);
-  (afs, time) \<leftarrow> afs_get_current_time afs;
-  r \<leftarrow> read_afs_inode afs (v_ino oldvdir);
+Definition afs_move_def:
+  afs_move afs oldvdir oldname oldvnode newvdir newname onewvnode = (if a_is_readonly afs then return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error eRoFs) else do
+  old_is_dir <- return (S_ISDIR (v_mode oldvnode));
+  ncnt <- return (if old_is_dir then (v_nlink oldvnode - 1) else (v_nlink oldvnode));
+  oldvnode' <- return (oldvnode <| v_nlink := ncnt |>);
+  oldinode <- return ((the $ updated_afs afs (v_ino oldvnode)) <| i_nlink := ncnt |>);
+  (afs, time) <- afs_get_current_time afs;
+  r <- read_afs_inode afs (v_ino oldvdir);
   (case r of
-  Error e \<Rightarrow> return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error e)|
-  Success olddir \<Rightarrow> do
-  r \<leftarrow> return (Success $ i_dir_update (\<lambda>d. d ((\<alpha>wa oldname) := None, (\<alpha>wa newname) := Some (v_ino oldvnode))) olddir) \<sqinter> return (Error eNameTooLong);
+  | Error e => return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error e)
+  | Success olddir => do
+  r <- return (Success $ i_dir_update (\d. d ((alphawa oldname) |-> None, (alphawa newname) |-> Some (v_ino oldvnode))) olddir) TODO: Alt return (Error eNameTooLong);
   (case r of
-  Error e \<Rightarrow> return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error e)|
-  Success olddir \<Rightarrow> do
-  onewsz \<leftarrow> select {sz. sz < v_size oldvdir};
-  olddir \<leftarrow> return (olddir \<lparr> i_ctime := time,
-  i_mtime := time,
-  i_size := onewsz \<rparr>);
-  oldvdir' \<leftarrow> return (oldvdir \<lparr> v_mtime := time,
-  v_ctime := time,
-  v_size := onewsz \<rparr>);
-  r \<leftarrow> read_afs_inode afs (v_ino newvdir);
+  | Error e => return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error e)
+  | Success olddir => do
+  onewsz <- select {sz. sz < v_size oldvdir};
+  olddir <- return (olddir <| i_ctime := time;
+  i_mtime := time;
+  i_size := onewsz |>);
+  oldvdir' <- return (oldvdir <| v_mtime := time;
+  v_ctime := time;
+  v_size := onewsz |>);
+  r <- read_afs_inode afs (v_ino newvdir);
   (case r of
-  Error e \<Rightarrow> return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error e)|
-  Success newdir \<Rightarrow> do
-  r \<leftarrow> return (Success $ i_dir_update (\<lambda>d. d ((\<alpha>wa newname) := Some (v_ino oldvnode))) newdir) \<sqinter> return (Error eNameTooLong);
+  | Error e => return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error e)
+  | Success newdir => do
+  r <- return (Success $ i_dir_update (\d. d ((alphawa newname) |-> Some (v_ino oldvnode))) newdir) TODO: Alt return (Error eNameTooLong);
   (case r of
-  Error e \<Rightarrow> return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error e)|
-  Success newdir \<Rightarrow> do
-  nnewsz \<leftarrow> select {sz. sz > v_size newvdir};
-  ncnt \<leftarrow> return (if old_is_dir then (v_nlink newvdir + 1) else (v_nlink newvdir));
-  newvdir' \<leftarrow> return (newvdir \<lparr> v_ctime := time,
-  v_mtime := time,
-  v_nlink := ncnt,
-  v_size := nnewsz \<rparr>);
-  newdir \<leftarrow> return (newdir \<lparr> i_ctime := time,
-  i_mtime := time,
-  i_nlink := ncnt,
-  i_size := nnewsz \<rparr>);
+  | Error e => return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error e)
+  | Success newdir => do
+  nnewsz <- select {sz. sz > v_size newvdir};
+  ncnt <- return (if old_is_dir then (v_nlink newvdir + 1) else (v_nlink newvdir));
+  newvdir' <- return (newvdir <| v_ctime := time;
+  v_mtime := time;
+  v_nlink := ncnt;
+  v_size := nnewsz |>);
+  newdir <- return (newdir <| i_ctime := time;
+  i_mtime := time;
+  i_nlink := ncnt;
+  i_size := nnewsz |>);
   (case onewvnode of
-  Some newvnode \<Rightarrow> let newinode = the $ updated_afs afs (v_ino newvnode);
-  new_is_dir = afs_inode_is_dir (i_type newinode) in (if new_is_dir \<and> dom (i_dir newinode) \<noteq> {} then return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error eNotEmpty) else do
-  ncnt \<leftarrow> return (if new_is_dir then 0 else (v_nlink newvnode - 1));
-  newvnode' \<leftarrow> return (newvnode \<lparr> v_nlink := ncnt \<rparr>);
-  newinode \<leftarrow> return (newinode \<lparr> i_nlink := ncnt \<rparr>);
-  (afs, r) \<leftarrow> afs_update afs (\<lambda>f. f ((i_ino oldinode) \<mapsto> oldinode, (i_ino olddir) \<mapsto> olddir, (i_ino newdir) \<mapsto> newdir, (i_ino newinode) \<mapsto> newinode));
+  | Some newvnode => let newinode = the $ updated_afs afs (v_ino newvnode);
+  new_is_dir = afs_inode_is_dir (i_type newinode)
+  in
+  (if new_is_dir /\ dom (i_dir newinode) <> {} then return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error eNotEmpty) else do
+  ncnt <- return (if new_is_dir then 0 else (v_nlink newvnode - 1));
+  newvnode' <- return (newvnode <| v_nlink := ncnt |>);
+  newinode <- return (newinode <| i_nlink := ncnt |>);
+  (afs, r) <- afs_update afs (\f. f ((i_ino oldinode) -> oldinode, (i_ino olddir) -> olddir, (i_ino newdir) -> newdir, (i_ino newinode) -> newinode));
   (case r of
-  Error e \<Rightarrow> return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error e)|
-  Success () \<Rightarrow> return ((afs, oldvdir', oldvnode', newvdir', Some newvnode'), Success ()))
-  od)|
-  None \<Rightarrow> do
-  (afs, r) \<leftarrow> afs_update afs (\<lambda>f. f ((i_ino oldinode) \<mapsto> oldinode, (i_ino olddir) \<mapsto> olddir, (i_ino newdir) \<mapsto> newdir));
+  | Error e => return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error e)
+  | Success () => return ((afs, oldvdir', oldvnode', newvdir', Some newvnode'), Success ()))
+  od)
+  | None => do
+  (afs, r) <- afs_update afs (\f. f ((i_ino oldinode) -> oldinode, (i_ino olddir) -> olddir, (i_ino newdir) -> newdir));
   (case r of
-  Error e \<Rightarrow> return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error e)|
-  Success () \<Rightarrow> return ((afs, oldvdir', oldvnode', newvdir', None), Success ()))
+  | Error e => return ((afs, oldvdir, oldvnode, newvdir, onewvnode), Error e)
+  | Success () => return ((afs, oldvdir', oldvnode', newvdir', None), Success ()))
   od)
   od)
   od)
@@ -602,22 +616,22 @@ Definition afs_move:
   od)
 End
 
-Definition afs_dir_emit:
-  afs_dir_emit \<equiv> \<lambda>(pos, entries) name ino vtype. do
-  bool \<leftarrow> select UNIV;
-  (if bool then return (Iterate (pos, entries ((\<alpha>wa name) := None))) else return (Break (pos, entries ((\<alpha>wa name) := None))))
+Definition afs_dir_emit_def:
+  afs_dir_emit = \(pos, entries) name ino vtype. do
+  bool <- select UNIV;
+  (if bool then return (Iterate (pos, entries ((alphawa name) |-> None))) else return (Break (pos, entries ((alphawa name) |-> None))))
   od
 End
 
-Definition afs_readdir:
+Definition afs_readdir_def:
   afs_readdir afs rdctx obrdctx vdir = do
-  r \<leftarrow> read_afs_inode afs (v_ino vdir);
+  r <- read_afs_inode afs (v_ino vdir);
   (case r of
-  Error e \<Rightarrow> return ((afs, rdctx, obrdctx), Error e)|
-  Success dir \<Rightarrow> do
-  toemit \<leftarrow> select {entries. entries \<subseteq> dom (i_dir dir)};
-  obrdctx \<leftarrow> select UNIV;
-  pos \<leftarrow> select UNIV;
+  | Error e => return ((afs, rdctx, obrdctx), Error e)
+  | Success dir => do
+  toemit <- select {entries. entries \<subseteq> dom (i_dir dir)};
+  obrdctx <- select UNIV;
+  pos <- select UNIV;
   return ((afs, (pos, (snd rdctx) |` (-toemit)), obrdctx), Success ())
   od)
   od
@@ -640,8 +654,8 @@ vfsstat = <|
 End
 
 
-Definition afs_getattr:
-  afs_getattr afs stat vnode \<equiv> return (afs, stat <| vs_ino := v_ino vnode;
+Definition afs_getattr_def:
+  afs_getattr afs stat vnode = return (afs, stat <| vs_ino := v_ino vnode;
   vs_nlink := v_nlink vnode;
   vs_mode := v_mode vnode;
   vs_uid := v_uid vnode;
@@ -666,26 +680,26 @@ iattr = <|
 End
 
 
-Definition iattr_is_set:
-  iattr_is_set iattr flag \<equiv> iattr_valid iattr AND flag \<noteq> 0
+Definition iattr_is_set_def:
+  iattr_is_set iattr flag = iattr_valid iattr AND flag <> 0
 End
 
-Definition afs_setattr:
-  afs_setattr afs iattr vnode \<equiv> let vnode' = (if iattr_is_set iattr vfs_ATTR_MODE then vnode \<lparr> v_mode := iattr_mode iattr \<rparr> else vnode);
-  vnode' = (if iattr_is_set iattr vfs_ATTR_UID then vnode' \<lparr> v_uid := iattr_uid iattr \<rparr> else vnode');
-  vnode' = (if iattr_is_set iattr vfs_ATTR_GID then vnode' \<lparr> v_gid := iattr_gid iattr \<rparr> else vnode');
-  vnode' = (if iattr_is_set iattr vfs_ATTR_MTIME then vnode' \<lparr> v_mtime := iattr_mtime iattr \<rparr> else vnode');
-  vnode' = (if iattr_is_set iattr vfs_ATTR_CTIME then vnode' \<lparr> v_ctime := iattr_ctime iattr \<rparr> else vnode')
+Definition afs_setattr_def:
+  afs_setattr afs iattr vnode = let vnode' = (if iattr_is_set iattr vfs_ATTR_MODE then vnode <| v_mode := iattr_mode iattr |> else vnode);
+  vnode' = (if iattr_is_set iattr vfs_ATTR_UID then vnode' <| v_uid := iattr_uid iattr |> else vnode');
+  vnode' = (if iattr_is_set iattr vfs_ATTR_GID then vnode' <| v_gid := iattr_gid iattr |> else vnode');
+  vnode' = (if iattr_is_set iattr vfs_ATTR_MTIME then vnode' <| v_mtime := iattr_mtime iattr |> else vnode');
+  vnode' = (if iattr_is_set iattr vfs_ATTR_CTIME then vnode' <| v_ctime := iattr_ctime iattr |> else vnode')
   in
   do
-  (afs, r) \<leftarrow> afs_update afs (\<lambda>f. f ((v_ino vnode') \<mapsto> the (f (v_ino vnode')) \<lparr> i_mode := v_mode vnode',
-  i_uid := v_uid vnode',
-  i_gid := v_gid vnode',
-  i_mtime := v_mtime vnode',
-  i_ctime := v_ctime vnode' \<rparr>));
+  (afs, r) <- afs_update afs (\f. f ((v_ino vnode') -> the (f (v_ino vnode')) <| i_mode := v_mode vnode';
+  i_uid := v_uid vnode';
+  i_gid := v_gid vnode';
+  i_mtime := v_mtime vnode';
+  i_ctime := v_ctime vnode' |>));
   (case r of
-  Error e \<Rightarrow> return ((afs, vnode), Error e)|
-  Success () \<Rightarrow> return ((afs, vnode'), Success ()))
+  | Error e => return ((afs, vnode), Error e)
+  | Success () => return ((afs, vnode'), Success ()))
   od
 End
 

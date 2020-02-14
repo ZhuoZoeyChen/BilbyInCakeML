@@ -232,7 +232,7 @@ where
    case r of
       Error e \<Rightarrow> return ((afs, parentdir, vnode), Error e)
     | Success dir \<Rightarrow> do
-     r  \<leftarrow> return (Success $ i_dir_update (\<lambda>d. d(\<alpha>wa name \<mapsto> v_ino vnode)) dir) \<sqinter> return (Error eNameTooLong);
+     r  \<leftarrow> return (Success $ i_dir_update (\<lambda>d. d(\<alpha>\<alpha>wa name \<mapsto> v_ino vnode)) dir) \<sqinter> return (Error eNameTooLong);
      case r of
        Error e \<Rightarrow>  return ((afs, parentdir, vnode), Error e)
      | Success dir \<Rightarrow> do
