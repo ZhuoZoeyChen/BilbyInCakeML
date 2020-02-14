@@ -10,8 +10,9 @@ import Text.PrettyPrint.ANSI.Leijen
 import Prelude hiding ((<$>))
 import Text.Printf (printf)
 import Data.Char (ord)
-import Data.List
 import Data.Data
+import Data.List
+import Data.Maybe (fromJust)
 import Data.Typeable
 import System.FilePath.Posix
 
@@ -46,10 +47,30 @@ quantifierSymHOL =  quantifierRecSymbol . quantifierAuxHOL
 
 instance Pretty HOLIdent where 
     pretty (HOLIdent ident) = case ident of 
-        Id id            -> string id
+        Id id            -> string $ unSymbolIdentHOL id
         Wildcard         -> string "_"
-        TypedIdent id ty -> pretty id <+> string "::" <+> pretty ty
+        TypedIdent id ty -> pretty (HOLIdent id) <+> string "::" <+> pretty (HOLType ty)
 
+unSymbolIdentHOL :: String -> String 
+unSymbolIdentHOL [] = []
+unSymbolIdentHOL (x : xs) = if x == '\\'
+                            then let (txt, rest) =
+                                        span (/= '>') $ fromJust $ stripPrefix "<" xs
+                                  in  txt ++ unSymbolIdentHOL (drop 1 rest)
+                            else x : unSymbolIdentHOL xs
+  -- where
+  --   unSymbolMapping "alpha" = 
+  --   unSymbolMapping "alpha" = _
+  --   unSymbolMapping "alpha" = _
+  --   unSymbolMapping "alpha" = _
+  --   unSymbolMapping "alpha" = _
+  --   unSymbolMapping "alpha" = _
+  --   unSymbolMapping "alpha" = _
+  --   unSymbolMapping "alpha" = _
+  --   unSymbolMapping "alpha" = _
+  --   unSymbolMapping "alpha" = _
+
+--"\\<alpha>wa"
 instance Pretty HOLConst where 
     pretty (HOLConst c) = case c of 
         TrueC  -> string "T"
@@ -82,28 +103,73 @@ prettyHOLTerm p (HOLTerm tm) = case tm of
   --                             MetaImp -> prettyMetaImpHOL p t t'
   --                             _       -> prettyBinOpTermHOL p b t t')
   TermUnOp u t          -> prettyUnOpTermHOL p u (HOLTerm t)
-  ListTerm l ts r       -> pretty l <> hcat (intersperse (string ", ") (map ((prettyHOLTerm termAppPrecHOL). HOLTerm) ts)) <> pretty r
+  ListTerm l ts r       -> pretty l <> hcat (intersperse (string ", ") (map (prettyHOLTerm termAppPrecHOL . HOLTerm) ts)) <> pretty r
   ConstTerm const       -> pretty const
   AntiTerm str          -> empty
-  CaseOf e alts         -> parens (string "case" <+> pretty e <+> string "of" <$> sep (map ((text "|" <+> ). (prettyAssis "=>")) alts))
-  RecordUpd upds        -> string "<|" <+> sep (punctuate (text ";") (map (prettyAssis ":=") upds)) <+> string "|>"
-  RecordDcl dcls        -> string "<|" <+> sep (punctuate (text ";") (map (prettyAssis ":=") dcls)) <+> string "|>"
+  CaseOf e alts         -> parens (string "case" <+> pretty e <+> string "of" <$> sep (map ((text "|" <+> ). (prettyAssisHOL "=>")) alts))
+  RecordUpd upds        -> string "<|" <+> sep (punctuate (text ";") (map (prettyAssisHOL ":=") upds)) <+> string "|>"
+  RecordDcl dcls        -> string "<|" <+> sep (punctuate (text ";") (map (prettyAssisHOL ":=") dcls)) <+> string "|>"
   IfThenElse cond c1 c2 -> parens (string "if" <+> prettyHOLTerm p (HOLTerm cond) <+> string "then" <+> 
                             prettyHOLTerm p (HOLTerm c1) <+> string "else" <+> prettyHOLTerm p (HOLTerm c2))
-  DoBlock dos           -> string "do" <$> sep (punctuate (text ";") (map pretty dos)) <$> string "od"
-  DoItem  a b           -> pretty a <+> string "\\<leftarrow>" <+> pretty b 
+  DoBlock dos           -> string "do" <$> sep (punctuate (text ";") (map (pretty . HOLTerm) dos)) <$> string "od"
+  DoItem  a b           -> pretty (HOLTerm a) <+> string "<-" <+> pretty (HOLTerm b) --F
   Set st                -> string "{" <> (case st of 
-                              Quant q c -> pretty q <> string "." <+> pretty c
-                              Range a b -> pretty a <> string ".." <> pretty b 
-                              Listing lst -> sep (punctuate (text ";") (map pretty lst))) <> string "}"
+                              Quant q c -> pretty (HOLTerm q) <> string "." <+> pretty (HOLTerm c)
+                              Range a b -> pretty (HOLTerm a) <> string ".." <> pretty (HOLTerm b) 
+                              Listing lst -> sep (punctuate (text ";") (map (pretty . HOLTerm) lst))) <> string "}"
                           -- FIXME: zoeyc
-  LetIn lt i            -> string "let" <+> vsep (punctuate (text ";") (map (prettyAssis "=") lt)) <$$> string "in" <$$> pretty i
+  LetIn lt i            -> string "let" <+> vsep (punctuate (text ";") (map (prettyAssisHOL "=") lt)) <$$> string "in" <$$> pretty (HOLTerm i)
                           -- FIXME: make indentation better / zoeyc
+
+prettyAssisHOL :: String -> (Term, Term) -> Doc 
+prettyAssisHOL s (p, e) = pretty (HOLTerm p) <+> pretty s <+> pretty (HOLTerm e)
+
 prettyBinOpTermHOL :: Precedence -> TermBinOp -> HOLTerm -> HOLTerm -> Doc
-prettyBinOpTermHOL p b = prettyBinOp p prettyHOLTerm (termBinOpRec b) prettyHOLTerm
+prettyBinOpTermHOL p b = prettyBinOp p prettyHOLTerm (termBinOpRecHOL b) prettyHOLTerm
 
 prettyUnOpTermHOL :: Precedence -> TermUnOp -> HOLTerm -> Doc
-prettyUnOpTermHOL p u = prettyUnOp p (termUnOpRec u) prettyHOLTerm
+prettyUnOpTermHOL p u = prettyUnOp p (termUnOpRecHOL u) prettyHOLTerm
+
+termBinOpRecHOL :: TermBinOp -> BinOpRec
+termBinOpRecHOL b = case b of
+  Equiv     -> BinOpRec AssocRight 2   "="
+  MetaImp   -> BinOpRec AssocRight 1   "==>"
+  Eq        -> BinOpRec AssocLeft  50  "="
+  NotEq     -> BinOpRec AssocLeft  50  "<>"
+  Iff       -> BinOpRec AssocRight 24  "IFF"
+  Conj      -> BinOpRec AssocRight 35  "/\\" --F
+  Disj      -> BinOpRec AssocRight 30  "\\/" --F
+  Implies   -> BinOpRec AssocRight 25  "==>" --F
+  DollarApp -> BinOpRec AssocRight 10  "$"
+  Bind      -> BinOpRec AssocRight 60  ">>=" --F
+  Image     -> BinOpRec AssocRight 90  "`" --F
+  Union     -> BinOpRec AssocLeft  65  "UNION"
+  Ge        -> BinOpRec AssocRight 50  ">="
+  Alt       -> BinOpRec AssocRight 20  "TODO: Alt" --F
+  Append    -> BinOpRec AssocLeft  65  "@" --F
+  Greater   -> BinOpRec AssocRight 50  ">"
+  Minus     -> BinOpRec AssocLeft  65  "-"
+  Less      -> BinOpRec AssocLeft  50  "<"
+  In        -> BinOpRec AssocRight 50  "IN"
+  Add       -> BinOpRec AssocLeft  65  "+"
+  Times     -> BinOpRec AssocLeft  70  "*" --F
+  BitAND    -> BinOpRec AssocLeft  64  "AND" --F
+  BitOR     -> BinOpRec AssocLeft  59  "OR" --F
+  BitXOR    -> BinOpRec AssocLeft  59  "XOR"--F
+  Shiftl    -> BinOpRec AssocLeft  55  "<<" --F
+  Shiftr    -> BinOpRec AssocLeft  55  ">>" --F
+  TestBit   -> BinOpRec AssocLeft  100 "!!" --F
+  Nth       -> BinOpRec AssocLeft  100 "!" --F
+  SubSetEq  -> BinOpRec AssocRight 50  "\\<subseteq>" --F
+  RestrictMp-> BinOpRec AssocRight 110 "|`" -- FIXME: zoeyc
+  Comp      -> BinOpRec AssocRight 55  "o"
+  MapsTo    -> BinOpRec AssocRight 100 "->"
+  MapUpd    -> BinOpRec AssocRight 100 "|->"
+
+termUnOpRecHOL :: TermUnOp -> UnOpRec
+termUnOpRecHOL u = case u of
+  Not    -> UnOpRec 40 "\\<not>"--F
+  Uminus -> UnOpRec 81 "-" --F
 
 --
 -- [| P_1; ...; P_n |] ==> Q is syntactic sugar for P_1 ==> ... ==> P_n ==> Q
@@ -122,7 +188,7 @@ prettyUnOpTermHOL p u = prettyUnOp p (termUnOpRec u) prettyHOLTerm
 --       string "\\<rbrakk>" <+> string (termBinOpSym MetaImp) <+> prettyTerm p' t
 
 prettyQuantifierHOL :: Precedence -> Quantifier -> [Term] -> Term -> Doc
-prettyQuantifierHOL p q is t = prettyParen (p > quantifierPrec q) $ string (quantifierSym q) <>
+prettyQuantifierHOL p q is t = prettyParen (p > quantifierPrecHOL q) $ string (quantifierSymHOL q) <>
                               (hsep . map (prettyHOLTerm 0. HOLTerm) $ is) <> char '.' <+> pretty (HOLTerm t)
 
 instance Pretty HOLPrimType where
@@ -134,8 +200,8 @@ instance Pretty HOLPrimType where
 instance Pretty HOLType where
   pretty = prettyHOLType 0
 
-tyArrowSymHOL = "\\<Rightarrow>" -- FIXME: zoeyc
-tyTupleSymHOL = "\\<times>" -- FIXME: zoeyc
+tyArrowSymHOL = "->"
+tyTupleSymHOL = "#"
 
 prettyTypeVarsHOL :: [HOLType] -> Doc
 prettyTypeVarsHOL [] = empty
@@ -243,7 +309,7 @@ instance (Pretty terms, Pretty types) => Pretty (HOLDcl types terms) where
 
 instance (Pretty terms, Pretty types) => Pretty (HOLPrc types terms) where
   pretty (HOLPrc (Prc thmDecl recCases)) =  string "Definition" <+> 
-    pretty (fmap HOLSig thmDecl) <> string ":" <$$> vsep (punctuate (text "/\\") (map prettyRecHOL recCases)) 
+    pretty (fmap HOLSig thmDecl) <> string "_def:" <$$> vsep (punctuate (text "/\\") (map prettyRecHOL recCases)) 
     <$$> string "End" <$$> empty
 
 prettyRecHOL :: (Pretty terms) => (terms, terms) -> Doc
@@ -261,7 +327,7 @@ instance (Pretty terms, Pretty types) => Pretty (HOLLemmas types terms) where
 instance (Pretty terms, Pretty types) => Pretty (HOLTypeSyn types terms) where
   pretty (HOLTypeSyn (TypeSyn mbName typs tvs)) = string "Type" <+>
     prettyTypeVars (map TyVar tvs) <+>
-    pretty mbName <+> string "=" <+> pretty typs <> string ";" <$$> empty
+    pretty mbName <+> string "=" <+> (quote. pretty) typs <> string ";" <$$> empty
 
 -- FIXME: zoeyc
 instance (Pretty terms, Pretty types) => Pretty (HOLTypeDecl types terms) where
@@ -388,9 +454,10 @@ instance Pretty HOLMethodModifier where
 instance (Pretty terms, Pretty types) => Pretty (HOLDef types terms) where
   pretty (HOLDef def) = string "Definition" <+> mbSig <$$> indent 2 (pretty (defTerm def)) <$$> string "End"
     where mbSig = case defSig def of 
-                    Just sig -> (string (sigName sig)) <> string ":" 
+                    Just sig -> (string (sigName sig)) <> string "_def:" 
                     Nothing  -> empty
 
+--FIXME: zoeyc
 prettyOvHOL specDef sig = string "overloading" <> mbSig
                   <$$> string "begin"
                   <$$> indent 2 mbDefn
@@ -405,7 +472,7 @@ prettyOvHOL specDef sig = string "overloading" <> mbSig
           mbDefn =
             case defSig specDef of 
               Just specSig ->
-                string "definition " <> pretty specSig <> string ": " <> quote (pretty (defTerm specDef))
+                string "Definition " <> pretty specSig <> string "_def: " <> quote (pretty (defTerm specDef))
               _ -> empty
 
 instance Pretty types => Pretty (HOLSig types) where

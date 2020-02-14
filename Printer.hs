@@ -47,7 +47,7 @@ main = do
         Right res -> do 
             -- ho4 <- return(translate res) 
             -- pho4 <- return(prettify ho4)
-            
+
             -- writeFile "/home/zoey/BilbyInCakeML/AfsSD" (show res)
 
             handle <- openFile "AfsSDParsed.sml" WriteMode

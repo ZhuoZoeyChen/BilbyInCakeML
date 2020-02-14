@@ -55,6 +55,7 @@ executable BilbyInCakeML
   other-modules:
     ASTTranslator
     PrettyPrint
+    PrettyWrapper
 
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    DeriveDataTypeable, FlexibleContexts, CPP, GADTs, LambdaCase, QuasiQuotes
