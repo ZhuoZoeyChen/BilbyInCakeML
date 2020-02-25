@@ -10,14 +10,11 @@ import Text.PrettyPrint.ANSI.Leijen
 import Data.Data
 import System.IO
 
-
 import Isabelle.InnerAST 
 import Isabelle.OuterAST
 import Isabelle.PrettyHelper 
 import Isabelle.Parser
 
-import ASTTranslator
-import PrettyPrint
 import PrettyWrapper
 
 getFile :: IO (Maybe String)
